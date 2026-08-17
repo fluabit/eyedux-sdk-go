@@ -302,7 +302,9 @@ HTTP 200 OK
     "status": "active",
     "timestamp": "2026-08-13T10:00:00Z",
     "created_at": "2026-08-13T10:00:01Z",
-    "external_id": "evt_01HX92K"
+    "external_id": "evt_01HX92K",
+    "correlation_id": null,
+    "metadata": null
   }
 }
 ```

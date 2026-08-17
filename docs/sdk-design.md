@@ -145,9 +145,9 @@ type Event struct {
     Status        string         `json:"status"`
     Timestamp     time.Time      `json:"timestamp"`
     CreatedAt     time.Time      `json:"created_at"`
-    ExternalID    *string        `json:"external_id,omitempty"`
-    CorrelationID *string        `json:"correlation_id,omitempty"`
-    Metadata      map[string]any `json:"metadata,omitempty"`
+    ExternalID    *string        `json:"external_id"`
+    CorrelationID *string        `json:"correlation_id"`
+    Metadata      map[string]any `json:"metadata"`
 }
 ```
 
@@ -226,9 +226,8 @@ Usar `errors.New` simples para erros de validação interna do SDK:
 
 ```go
 var (
-    ErrEmptyAPIKey      = errors.New("eyedux: api key must not be empty")
-    ErrEmptyBaseURL     = errors.New("eyedux: base URL must not be empty")
-    ErrEmptyExternalID  = errors.New("eyedux: external_id must not be empty")
+    ErrEmptyAPIKey     = errors.New("eyedux: api key must not be empty")
+    ErrEmptyExternalID = errors.New("eyedux: external_id must not be empty")
 )
 ```
 
