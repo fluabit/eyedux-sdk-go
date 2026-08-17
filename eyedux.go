@@ -74,14 +74,7 @@ type createEventBody struct {
 
 // CreateEvent ingests a new event into the authenticated organization.
 func (c *Client) CreateEvent(ctx context.Context, input CreateEventInput) (*Event, error) {
-	body := createEventBody{
-		ProjectID:     input.ProjectID,
-		Type:          input.Type,
-		Properties:    input.Properties,
-		ExternalID:    input.ExternalID,
-		CorrelationID: input.CorrelationID,
-		Metadata:      input.Metadata,
-	}
+	body := createEventBody(input)
 
 	var env successEnvelope[*Event]
 	if err := c.do(ctx, http.MethodPost, "/public/logs", body, &env); err != nil {
