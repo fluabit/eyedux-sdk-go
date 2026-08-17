@@ -187,8 +187,6 @@ HTTP 201 Created
 }
 ```
 
-**Campos em `data`**
-
 | Campo | Tipo | Presença |
 |-------|------|----------|
 | `id` | `string` | Sempre |
@@ -197,9 +195,9 @@ HTTP 201 Created
 | `status` | `string` | Sempre (`active` na criação) |
 | `timestamp` | `string` (RFC3339) | Sempre |
 | `created_at` | `string` (RFC3339) | Sempre |
-| `external_id` | `string` | Quando fornecido |
-| `correlation_id` | `string` | Quando fornecido |
-| `metadata` | `object` | Quando fornecido |
+| `external_id` | `string` ou `null` | Sempre |
+| `correlation_id` | `string` ou `null` | Sempre |
+| `metadata` | `object` ou `null` | Sempre |
 
 #### Respostas de erro
 
@@ -248,13 +246,16 @@ HTTP 200 OK
       "properties": { "plan": "pro" },
       "status": "active",
       "timestamp": "2026-08-13T10:00:00Z",
-      "created_at": "2026-08-13T10:00:01Z"
+      "created_at": "2026-08-13T10:00:01Z",
+      "external_id": null,
+      "correlation_id": null,
+      "metadata": null
     }
   ]
 }
 ```
 
-Campos por item idênticos ao retorno de criação. Ordenação: `created_at` decrescente.
+Campos por item idênticos ao retorno de criação (campos opcionais retornam `null`, nunca omitidos). Ordenação: `created_at` decrescente.
 
 Não há paginação neste endpoint. O backend retorna todos os eventos que correspondem aos filtros em um único array. `data` pode ser `[]` quando não há resultados — isso não é um erro.
 
@@ -324,19 +325,19 @@ A busca é **global** — não filtra por organização ou projeto. O `external_
 
 ### Event
 
-Representa um evento retornado pela API.
+Representa um evento retornado pela API. Campos opcionais são sempre presentes no JSON, com valor `null` quando não preenchidos.
 
-| Campo | Tipo Go sugerido | Presença | Observação |
-|-------|-----------------|----------|------------|
-| `id` | `string` | Sempre | ObjectID hexadecimal |
-| `type` | `string` | Sempre | |
-| `properties` | `map[string]any` | Sempre | |
-| `status` | `string` | Sempre | `"active"` ou `"deleted"` |
-| `timestamp` | `time.Time` | Sempre | RFC3339 |
-| `created_at` | `time.Time` | Sempre | RFC3339 |
-| `external_id` | `*string` | Opcional | `nil` quando ausente |
-| `correlation_id` | `*string` | Opcional | `nil` quando ausente |
-| `metadata` | `map[string]any` | Opcional | `nil` quando ausente |
+| Campo | Tipo Go sugerido | Observação |
+|-------|-----------------|------------|
+| `id` | `string` | ObjectID hexadecimal |
+| `type` | `string` | |
+| `properties` | `map[string]any` | |
+| `status` | `string` | `"active"` ou `"deleted"` |
+| `timestamp` | `time.Time` | RFC3339 |
+| `created_at` | `time.Time` | RFC3339 |
+| `external_id` | `*string` | `null` quando não definido |
+| `correlation_id` | `*string` | `null` quando não definido |
+| `metadata` | `map[string]any` | `null` quando não definido |
 
 ### CreateEventInput
 
