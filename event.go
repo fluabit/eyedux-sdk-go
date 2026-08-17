@@ -10,9 +10,9 @@ type Event struct {
 	Status        string         `json:"status"`
 	Timestamp     time.Time      `json:"timestamp"`
 	CreatedAt     time.Time      `json:"created_at"`
-	ExternalID    *string        `json:"external_id,omitempty"`
-	CorrelationID *string        `json:"correlation_id,omitempty"`
-	Metadata      map[string]any `json:"metadata,omitempty"`
+	ExternalID    *string        `json:"external_id"`
+	CorrelationID *string        `json:"correlation_id"`
+	Metadata      map[string]any `json:"metadata"`
 }
 
 // CreateEventInput holds the parameters for creating a new event.
