@@ -1,3 +1,3 @@
-module github.com/eyedux/eyedux-sdk-go
+module github.com/fluabit/eyedux-sdk-go
 
 go 1.21

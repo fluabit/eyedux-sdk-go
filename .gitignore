@@ -1,0 +1,16 @@
+# binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Go workspace file (local only)
+go.work
+go.work.sum
+
+# coverage
+coverage.out
+coverage.html
