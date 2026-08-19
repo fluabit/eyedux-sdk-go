@@ -1,5 +1,5 @@
-// Package eyedux is the official Go SDK for the Eyedux event ingestion platform.
-package eyedux
+// Package eyeduxsdk is the official Go SDK for the Eyedux event ingestion platform.
+package eyeduxsdk
 
 import (
 	"context"

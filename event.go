@@ -1,4 +1,4 @@
-package eyedux
+package eyeduxsdk
 
 import "time"
 
