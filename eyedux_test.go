@@ -101,7 +101,7 @@ func TestCreateEvent_success(t *testing.T) {
 
 func TestCreateEvent_conflict(t *testing.T) {
 	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
-		writeJSON(w, http.StatusConflict, apiErrorBody(ErrCodeEventExternalIDConflict, "conflict"))
+		writeJSON(w, http.StatusConflict, apiErrorBody(ErrCodeEventExternalObjectConflict, "conflict"))
 	})
 
 	_, err := c.CreateEvent(context.Background(), CreateEventInput{
@@ -113,8 +113,8 @@ func TestCreateEvent_conflict(t *testing.T) {
 		t.Errorf("expected conflict error, got %v", err)
 	}
 	var apiErr *APIError
-	if !errors.As(err, &apiErr) || apiErr.Code != ErrCodeEventExternalIDConflict {
-		t.Errorf("expected code %s, got %v", ErrCodeEventExternalIDConflict, err)
+	if !errors.As(err, &apiErr) || apiErr.Code != ErrCodeEventExternalObjectConflict {
+		t.Errorf("expected code %s, got %v", ErrCodeEventExternalObjectConflict, err)
 	}
 }
 
@@ -263,13 +263,16 @@ func TestFindEventByExternalID_success(t *testing.T) {
 		}
 		writeJSON(w, http.StatusOK, map[string]any{
 			"data": map[string]any{
-				"id":          "abc123",
-				"type":        "user.signup",
-				"properties":  map[string]any{"plan": "pro"},
-				"status":      "active",
-				"timestamp":   "2026-08-13T10:00:00Z",
-				"created_at":  "2026-08-13T10:00:01Z",
-				"external_id": externalID,
+				"id":         "abc123",
+				"type":       "user.signup",
+				"properties": map[string]any{"plan": "pro"},
+				"status":     "active",
+				"timestamp":  "2026-08-13T10:00:00Z",
+				"created_at": "2026-08-13T10:00:01Z",
+				"external_object": map[string]any{
+					"id":       externalID,
+					"property": "orderId",
+				},
 			},
 		})
 	})
@@ -278,8 +281,8 @@ func TestFindEventByExternalID_success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("FindEventByExternalID: %v", err)
 	}
-	if event.ExternalID == nil || *event.ExternalID != externalID {
-		t.Errorf("ExternalID = %v, want %s", event.ExternalID, externalID)
+	if event.ExternalObject == nil || event.ExternalObject.ID != externalID {
+		t.Errorf("ExternalObject.ID = %v, want %s", event.ExternalObject, externalID)
 	}
 }
 

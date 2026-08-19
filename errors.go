@@ -10,9 +10,9 @@ const (
 	ErrCodeInvalidAPIKey           = "invalid_api_key"
 	ErrCodeEventTypeRequired       = "event_type_required"
 	ErrCodeEventPropertiesEmpty    = "event_properties_empty"
-	ErrCodeEventExternalIDConflict = "event_external_id_conflict"
-	ErrCodeEventExternalIDNotFound = "event_external_id_not_found"
-	ErrCodeEventExternalIDRequired = "event_external_id_required"
+	ErrCodeEventExternalObjectConflict = "event_external_object_conflict"
+	ErrCodeEventExternalIDNotFound     = "event_external_id_not_found"
+	ErrCodeEventExternalIDRequired     = "event_external_id_required"
 	ErrCodeRateLimitExceeded       = "RATE_LIMIT_EXCEEDED"
 	ErrCodeInternalServerError     = "INTERNAL_SERVER_ERROR"
 )

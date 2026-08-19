@@ -64,17 +64,24 @@ func New(apiKey string, opts ...Option) (*Client, error) {
 
 // createEventBody is the JSON payload for POST /public/logs.
 type createEventBody struct {
-	ProjectID     string         `json:"project_id"`
-	Type          string         `json:"type"`
-	Properties    map[string]any `json:"properties"`
-	ExternalID    *string        `json:"external_id,omitempty"`
-	CorrelationID *string        `json:"correlation_id,omitempty"`
-	Metadata      map[string]any `json:"metadata,omitempty"`
+	ProjectID         string         `json:"project_id"`
+	Type              string         `json:"type"`
+	Properties        map[string]any `json:"properties"`
+	ExternalObject    *EventObject   `json:"external_object,omitempty"`
+	CorrelationObject *EventObject   `json:"correlation_object,omitempty"`
+	Metadata          map[string]any `json:"metadata,omitempty"`
 }
 
 // CreateEvent ingests a new event into the authenticated organization.
 func (c *Client) CreateEvent(ctx context.Context, input CreateEventInput) (*Event, error) {
-	body := createEventBody(input)
+	body := createEventBody{
+		ProjectID:         input.ProjectID,
+		Type:              input.Type,
+		Properties:        input.Properties,
+		ExternalObject:    input.ExternalObject,
+		CorrelationObject: input.CorrelationObject,
+		Metadata:          input.Metadata,
+	}
 
 	var env successEnvelope[*Event]
 	if err := c.do(ctx, http.MethodPost, "/public/logs", body, &env); err != nil {
