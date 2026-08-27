@@ -66,6 +66,7 @@ func New(apiKey string, opts ...Option) (*Client, error) {
 type createEventBody struct {
 	ProjectID         string         `json:"project_id"`
 	Type              string         `json:"type"`
+	TypeGroup         string         `json:"type_group,omitempty"`
 	Properties        map[string]any `json:"properties"`
 	ExternalObject    *EventObject   `json:"external_object,omitempty"`
 	CorrelationObject *EventObject   `json:"correlation_object,omitempty"`
@@ -77,6 +78,7 @@ func (c *Client) CreateEvent(ctx context.Context, input CreateEventInput) (*Even
 	body := createEventBody{
 		ProjectID:         input.ProjectID,
 		Type:              input.Type,
+		TypeGroup:         input.TypeGroup,
 		Properties:        input.Properties,
 		ExternalObject:    input.ExternalObject,
 		CorrelationObject: input.CorrelationObject,

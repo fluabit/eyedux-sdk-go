@@ -13,6 +13,7 @@ type EventObject struct {
 type Event struct {
 	ID                string         `json:"id"`
 	Type              string         `json:"type"`
+	TypeGroup         string         `json:"type_group"`
 	Properties        map[string]any `json:"properties"`
 	Status            string         `json:"status"`
 	Timestamp         time.Time      `json:"timestamp"`
@@ -26,6 +27,7 @@ type Event struct {
 type CreateEventInput struct {
 	ProjectID         string
 	Type              string
+	TypeGroup         string
 	Properties        map[string]any
 	ExternalObject    *EventObject
 	CorrelationObject *EventObject
