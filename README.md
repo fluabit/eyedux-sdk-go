@@ -247,9 +247,20 @@ O SDK não implementa retry automático — a política de retry fica a cargo do
 
 ---
 
-## Documentação interna
+## Documentação pública
 
 | Documento | Audiência | Descrição |
 |-----------|-----------|-----------|
-| [docs/api-reference.md](docs/api-reference.md) | Devs + IAs | Contrato completo da Public API |
-| [docs/sdk-design.md](docs/sdk-design.md) | Devs + IAs | Arquitetura e convenções do SDK |
+| [docs/client-integration.md](docs/client-integration.md) | Clients do SDK | Guia de instalação, configuração e integração com o Eyedux |
+| [docs/api-reference.md](docs/api-reference.md) | Devs que integram o SDK | Contrato completo da Public API |
+
+A documentação pode ser publicada como um site estático pelo GitHub Pages,
+usando `docs/` como diretório de publicação. Consulte o [guia de integração](docs/client-integration.md)
+para os passos e as limitações dessa opção.
+
+## Documentação de manutenção
+
+| Documento | Descrição |
+|-----------|-----------|
+| [internal/sdk-design.md](internal/sdk-design.md) | Arquitetura, convenções e diretrizes de teste do SDK |
+| [internal/client-integration-improvements.md](internal/client-integration-improvements.md) | Propostas de evolução da experiência de integração |

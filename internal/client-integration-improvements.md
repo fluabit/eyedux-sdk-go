@@ -463,7 +463,7 @@ por motivos puramente técnicos.
 
 ## Plano de implementação
 
-1. Atualizar `docs/sdk-design.md` e exemplos para `package eyeduxsdk` e
+1. Atualizar `internal/sdk-design.md` e exemplos para `package eyeduxsdk` e
    assinaturas reais do SDK.
 2. Adicionar `ErrEmptyProjectID`, `WithProjectID` e a resolução do projeto no
    payload.
