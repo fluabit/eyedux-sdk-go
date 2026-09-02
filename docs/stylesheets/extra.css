@@ -1,29 +1,61 @@
 :root {
-  --eyedux-ink: #17324d;
-  --eyedux-teal: #087f7b;
-  --eyedux-coral: #ed6a4a;
-  --eyedux-mist: #f1f7f6;
-  --eyedux-slate: #101b26;
+  --eyedux-page-bg: #0c0c0e;
+  --eyedux-content-surface: #101013;
+  --eyedux-content-border: rgb(255 255 255 / 0.1);
+  --eyedux-content-shadow: rgb(0 0 0 / 0.42);
+  --eyedux-text-primary: #d2d2d2;
+  --eyedux-text-secondary: #b7bec7;
+  --eyedux-text-muted: #7c7c7c;
+  --eyedux-eyebrow: #85b8ff;
+  --eyedux-button-primary: #0c66e4;
+  --eyedux-button-secondary: #403c70;
+  --eyedux-button-secondary-border: #3b424a;
+  --eyedux-button-secondary-text: #d6d9de;
+  --eyedux-card-bg: #16191b;
+  --eyedux-card-border: rgb(255 255 255 / 0.09);
+  --eyedux-card-shadow: rgb(0 0 0 / 0.34);
 }
 
 [data-md-color-scheme="default"] {
-  --md-primary-fg-color: var(--eyedux-ink);
-  --md-primary-fg-color--light: #315a78;
-  --md-primary-fg-color--dark: #10263a;
-  --md-accent-fg-color: var(--eyedux-coral);
-  --md-default-bg-color: #fbfcfc;
-  --md-code-bg-color: #f1f5f4;
-  --md-typeset-a-color: var(--eyedux-teal);
+  --eyedux-page-bg: #f4f5f7;
+  --eyedux-content-surface: #ffffff;
+  --eyedux-content-border: rgb(9 30 66 / 0.13);
+  --eyedux-content-shadow: rgb(9 30 66 / 0.14);
+  --eyedux-text-primary: #172b4d;
+  --eyedux-text-secondary: #42526e;
+  --eyedux-text-muted: #6b778c;
+  --eyedux-eyebrow: #0c66e4;
+  --eyedux-button-primary: #0c66e4;
+  --eyedux-button-secondary: #e2e1f2;
+  --eyedux-button-secondary-border: #d6d9de;
+  --eyedux-button-secondary-text: #172b4d;
+  --eyedux-card-bg: #ffffff;
+  --eyedux-card-border: #dfe1e6;
+  --eyedux-card-shadow: rgb(9 30 66 / 0.12);
+
+  --md-primary-fg-color: var(--eyedux-button-primary);
+  --md-primary-fg-color--light: #579dff;
+  --md-primary-fg-color--dark: #084da9;
+  --md-accent-fg-color: var(--eyedux-button-primary);
+  --md-default-bg-color: var(--eyedux-page-bg);
+  --md-default-fg-color: var(--eyedux-text-primary);
+  --md-default-fg-color--light: var(--eyedux-text-secondary);
+  --md-default-fg-color--lighter: var(--eyedux-text-muted);
+  --md-code-bg-color: #e3e4e6;
+  --md-typeset-a-color: var(--eyedux-button-primary);
 }
 
 [data-md-color-scheme="slate"] {
-  --md-primary-fg-color: #143e52;
-  --md-primary-fg-color--light: #236779;
-  --md-primary-fg-color--dark: #0d2d3c;
-  --md-accent-fg-color: #ff9474;
-  --md-default-bg-color: var(--eyedux-slate);
-  --md-code-bg-color: #172735;
-  --md-typeset-a-color: #73d0c7;
+  --md-primary-fg-color: var(--eyedux-button-primary);
+  --md-primary-fg-color--light: var(--eyedux-eyebrow);
+  --md-primary-fg-color--dark: #084da9;
+  --md-accent-fg-color: var(--eyedux-eyebrow);
+  --md-default-bg-color: var(--eyedux-page-bg);
+  --md-default-fg-color: var(--eyedux-text-primary);
+  --md-default-fg-color--light: var(--eyedux-text-secondary);
+  --md-default-fg-color--lighter: var(--eyedux-text-muted);
+  --md-code-bg-color: var(--eyedux-card-bg);
+  --md-typeset-a-color: var(--eyedux-eyebrow);
 }
 
 body {
@@ -31,7 +63,7 @@ body {
 }
 
 .md-header {
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12);
+  box-shadow: 0 1px 0 var(--eyedux-content-border);
 }
 
 .md-header__title {
@@ -51,21 +83,17 @@ body {
 }
 
 .eyedux-hero {
-  background: linear-gradient(135deg, var(--eyedux-mist) 0%, #fff7f2 100%);
-  border: 1px solid rgba(8, 127, 123, 0.18);
-  border-inline-start: 6px solid var(--eyedux-coral);
+  background: linear-gradient(135deg, var(--eyedux-content-surface) 0%, var(--eyedux-card-bg) 100%);
+  border: 1px solid var(--eyedux-content-border);
+  border-inline-start: 6px solid var(--eyedux-button-primary);
   border-radius: 8px;
+  box-shadow: 0 12px 30px var(--eyedux-content-shadow);
   margin: 0 0 2rem;
   padding: 2.5rem 2.75rem;
 }
 
-[data-md-color-scheme="slate"] .eyedux-hero {
-  background: linear-gradient(135deg, #142c39 0%, #26323c 100%);
-  border-color: rgba(115, 208, 199, 0.26);
-}
-
 .eyedux-hero__eyebrow {
-  color: var(--eyedux-coral);
+  color: var(--eyedux-eyebrow);
   font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -80,13 +108,13 @@ body {
 }
 
 .eyedux-hero h1 {
-  font-size: 3.4rem;
+  font-size: 2rem;
   line-height: 1.05;
   margin: 0.5rem 0 1rem;
 }
 
 .eyedux-hero__lede {
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   max-width: 42rem;
 }
 
@@ -98,20 +126,34 @@ body {
 }
 
 .eyedux-hero__actions .md-button {
+  font-size: 0.85rem;
   margin: 0;
 }
 
+.eyedux-hero__actions .md-button:not(.md-button--primary) {
+  background-color: var(--eyedux-button-secondary);
+  border-color: var(--eyedux-button-secondary-border);
+  color: var(--eyedux-button-secondary-text);
+}
+
+.eyedux-hero ~ h2 {
+  font-size: 1.5rem;
+}
+
+.eyedux-hero ~ .grid.cards {
+  font-size: 0.85rem;
+}
+
 .md-typeset .grid.cards > ul > li {
-  border-top: 3px solid var(--eyedux-teal);
+  background-color: var(--eyedux-card-bg);
+  border: 1px solid var(--eyedux-card-border);
+  border-top: 3px solid var(--eyedux-button-primary);
   border-radius: 8px;
+  box-shadow: 0 8px 20px var(--eyedux-card-shadow);
 }
 
 .md-typeset .grid.cards > ul > li strong {
-  color: var(--eyedux-ink);
-}
-
-[data-md-color-scheme="slate"] .md-typeset .grid.cards > ul > li strong {
-  color: #d6f0ed;
+  color: var(--eyedux-text-primary);
 }
 
 @media screen and (max-width: 600px) {
@@ -120,6 +162,6 @@ body {
   }
 
   .eyedux-hero h1 {
-    font-size: 2rem;
+    font-size: 1.8rem;
   }
 }
