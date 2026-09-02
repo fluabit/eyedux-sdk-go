@@ -22,7 +22,7 @@
 - **Framework-agnostic**: zero dependências além da stdlib do Go. Nenhum framework HTTP, nenhuma lib de serialização externa.
 - **Sem magia**: a interface pública deve ser previsível. O que está escrito na assinatura do método é o que acontece.
 - **Sem retry automático por padrão**: o integrador decide como lidar com falhas transitórias. O SDK expõe os erros de forma rica o suficiente para que o integrador implemente sua própria política.
-- **Configuração explícita**: todas as opções relevantes são configuráveis; nenhum comportamento depende de variáveis de ambiente.
+- **Configuração explícita**: todas as opções relevantes são configuráveis; `NewFromEnv` é apenas uma conveniência opt-in para ler a API key.
 - **Context-first**: todos os métodos que fazem I/O aceitam `context.Context` como primeiro argumento.
 
 ---
@@ -38,10 +38,11 @@ eyedux-sdk-go/
 ├── eyedux_test.go     # Testes do cliente
 └── docs/
     ├── api-reference.md
-    └── sdk-design.md
+    ├── sdk-design.md
+    └── client-integration-improvements.md
 ```
 
-Pacote único: `eyedux`. Não criar subpacotes — o SDK é pequeno o suficiente para viver em um único pacote.
+Pacote único: `eyeduxsdk`. Não criar subpacotes — o SDK é pequeno o suficiente para viver em um único pacote.
 
 ---
 
@@ -51,9 +52,11 @@ Pacote único: `eyedux`. Não criar subpacotes — o SDK é pequeno o suficiente
 
 ```go
 type Client struct {
-    apiKey     string
-    baseURL    string
-    httpClient *http.Client
+    apiKey          string
+    baseURL         string
+    httpClient      *http.Client
+    projectID       string
+    defaultMetadata map[string]any
 }
 ```
 
@@ -70,6 +73,25 @@ func New(apiKey string, opts ...Option) (*Client, error)
 - `opts` aplicados em sequência sobre uma config interna com defaults.
 - Retornar `(*Client, error)` para permitir validação no momento da criação.
 
+Construtores de conveniência:
+
+```go
+type Config struct {
+    APIKey          string
+    ProjectID       string
+    HTTPClient      *http.Client
+    Timeout         time.Duration
+    DefaultMetadata map[string]any
+}
+
+func NewWithConfig(config Config) (*Client, error)
+func NewFromEnv(opts ...Option) (*Client, error)
+```
+
+`NewWithConfig` exige `APIKey` e `ProjectID`. `NewFromEnv` lê somente
+`EYEDUX_API_KEY`; o projeto deve ser informado com `WithProjectID` ou no
+`CreateEventInput`. `NewFromConfig` não faz parte da API.
+
 ---
 
 ## Configuração
@@ -81,6 +103,8 @@ type Option func(*config)
 
 func WithHTTPClient(client *http.Client) Option
 func WithTimeout(d time.Duration) Option
+func WithProjectID(projectID string) Option
+func WithDefaultMetadata(metadata map[string]any) Option
 ```
 
 ### Defaults
@@ -90,6 +114,10 @@ func WithTimeout(d time.Duration) Option
 | `BaseURL` | `https://api.eyedux.com/` (fixo, não configurável) |
 | `Timeout` | `30s` |
 | `HTTPClient` | `&http.Client{Timeout: 30s}` |
+
+`WithProjectID` define o projeto padrão. Um `ProjectID` explicitamente
+informado no input tem precedência. `WithDefaultMetadata` adiciona metadados
+comuns; os metadados do evento têm precedência em caso de chave repetida.
 
 ---
 
@@ -108,6 +136,8 @@ func (c *Client) CreateEvent(ctx context.Context, input CreateEventInput) (*Even
 ```
 
 - Serializa `input` para JSON e faz `POST /public/logs`.
+- Usa `WithProjectID` quando `input.ProjectID` estiver vazio; retorna
+    `ErrEmptyProjectID` se nenhum dos dois estiver configurado.
 - Em sucesso (`201`), deserializa `data` para `*Event` e retorna.
 - Em erro, retorna `nil, <APIError>`.
 
@@ -141,7 +171,7 @@ func (c *Client) FindEventByExternalID(ctx context.Context, externalID string) (
 type Event struct {
     ID                string         `json:"id"`
     Environment       string         `json:"environment"`
-    EyeduxType        *string        `json:"eyedux_type"`
+    EyeduxType        *EventEyeduxType `json:"eyedux_type"`
     Type              string         `json:"type"`
     TypeGroup         string         `json:"type_group"`
     Properties        map[string]any `json:"properties"`
@@ -161,13 +191,32 @@ type CreateEventInput struct {
     ProjectID         string
     Type              string
     TypeGroup         string
-    EyeduxType        *string
+    EyeduxType        EventEyeduxType
     Properties        map[string]any
     ExternalObject    *EventObject
     CorrelationObject *EventObject
     Metadata          map[string]any
 }
 ```
+
+Tipos predefinidos:
+
+```go
+type EventEyeduxType string
+
+const (
+    EventEyeduxTypeSystemError   EventEyeduxType = "system-error"
+    EventEyeduxTypeSystemWarning EventEyeduxType = "system-warning"
+    EventEyeduxTypeSystemLog     EventEyeduxType = "system-log"
+    EventEyeduxTypeSystemDebug   EventEyeduxType = "system-debug"
+    EventEyeduxTypeSystemInfo    EventEyeduxType = "system-info"
+    EventEyeduxTypeSystemMetric  EventEyeduxType = "system-metric"
+)
+```
+
+`CreateEventInput.EyeduxType` usa o valor vazio quando o campo não deve ser
+enviado. `Event.EyeduxType` permanece ponteiro para distinguir `null` de um
+valor preenchido.
 
 ### ListEventsInput
 
@@ -219,6 +268,7 @@ const (
 ```go
 func IsNotFound(err error) bool
 func IsConflict(err error) bool
+func IsExternalObjectConflict(err error) bool
 func IsRateLimited(err error) bool
 func IsAuthError(err error) bool
 ```
@@ -232,9 +282,13 @@ Usar `errors.New` simples para erros de validação interna do SDK:
 ```go
 var (
     ErrEmptyAPIKey     = errors.New("eyedux: api key must not be empty")
+    ErrEmptyProjectID  = errors.New("eyedux: project id must not be empty")
     ErrEmptyExternalID = errors.New("eyedux: external_id must not be empty")
 )
 ```
+
+`ErrEmptyProjectID` é retornado por `NewWithConfig` sem projeto e por
+`CreateEvent` quando não há projeto padrão nem projeto no input.
 
 ---
 
@@ -281,7 +335,7 @@ type errorEnvelope struct {
 - Cobrir: sucesso, cada categoria de erro (400, 404, 409, 422, 429, 500).
 - Cobrir: validações internas do SDK (apiKey vazio, externalID vazio).
 - Não mockar a interface do cliente — testar o `Client` concreto contra um servidor fake.
-- Arquivo de teste: `eyedux_test.go` no mesmo pacote (`package eyedux`).
+- Arquivo de teste: `eyedux_test.go` no mesmo pacote (`package eyeduxsdk`).
 
 ### Padrão de helper de servidor fake
 

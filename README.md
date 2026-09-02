@@ -24,16 +24,14 @@ import (
 )
 
 func main() {
-    client, err := eyedux.New("sua-api-key")
+    client, err := eyeduxsdk.New("sua-api-key", eyeduxsdk.WithProjectID("64f1a2b3c4d5e6f7a8b9c0d1"))
     if err != nil {
         log.Fatal(err)
     }
 
-    eyeduxType := "system-log"
-    event, err := client.CreateEvent(context.Background(), eyedux.CreateEventInput{
-        ProjectID:  "64f1a2b3c4d5e6f7a8b9c0d1",
+    event, err := client.CreateEvent(context.Background(), eyeduxsdk.CreateEventInput{
         Type:       "user.signup",
-        EyeduxType: &eyeduxType,
+        EyeduxType: eyeduxsdk.EventEyeduxTypeSystemLog,
         Properties: map[string]any{"plan": "pro", "source": "landing_page"},
     })
     if err != nil {
@@ -46,10 +44,10 @@ func main() {
 
 ## Referência da interface pública
 
-### `eyedux.New`
+### `eyeduxsdk.New`
 
 ```go
-client, err := eyedux.New(apiKey string, opts ...eyedux.Option) (*eyedux.Client, error)
+client, err := eyeduxsdk.New(apiKey string, opts ...eyeduxsdk.Option) (*eyeduxsdk.Client, error)
 ```
 
 Retorna `ErrEmptyAPIKey` se `apiKey` for vazio. A base URL (`https://api.eyedux.com`) é fixa — não precisa ser configurada.
@@ -58,15 +56,39 @@ Retorna `ErrEmptyAPIKey` se `apiKey` for vazio. A base URL (`https://api.eyedux.
 
 | Opção | Descrição | Padrão |
 |-------|-----------|--------|
-| `eyedux.WithTimeout(d)` | Timeout das requisições HTTP | `30s` |
-| `eyedux.WithHTTPClient(c)` | Substitui o `*http.Client` inteiro | `&http.Client{Timeout: 30s}` |
+| `eyeduxsdk.WithTimeout(d)` | Timeout das requisições HTTP | `30s` |
+| `eyeduxsdk.WithHTTPClient(c)` | Substitui o `*http.Client` inteiro | `&http.Client{Timeout: 30s}` |
+| `eyeduxsdk.WithProjectID(id)` | Define o projeto padrão dos eventos | vazio |
+| `eyeduxsdk.WithDefaultMetadata(m)` | Adiciona metadados padrão aos eventos | vazio |
 
 ```go
 // Timeout customizado
-client, err := eyedux.New("sua-api-key", eyedux.WithTimeout(10*time.Second))
+client, err := eyeduxsdk.New("sua-api-key", eyeduxsdk.WithTimeout(10*time.Second))
 
 // HTTP client próprio (útil para proxies, transports customizados, etc.)
-client, err := eyedux.New("sua-api-key", eyedux.WithHTTPClient(meuHTTPClient))
+client, err := eyeduxsdk.New("sua-api-key", eyeduxsdk.WithHTTPClient(meuHTTPClient))
+```
+
+### `eyeduxsdk.NewWithConfig`
+
+Use `NewWithConfig` when the application already has an explicit configuration.
+`APIKey` and `ProjectID` are required.
+
+```go
+client, err := eyeduxsdk.NewWithConfig(eyeduxsdk.Config{
+    APIKey:    "sua-api-key",
+    ProjectID: "64f1a2b3c4d5e6f7a8b9c0d1",
+    Timeout:   2 * time.Second,
+})
+```
+
+`NewFromEnv` reads only `EYEDUX_API_KEY`. The project must be supplied with
+`WithProjectID` or in each `CreateEventInput`:
+
+```go
+client, err := eyeduxsdk.NewFromEnv(
+    eyeduxsdk.WithProjectID("64f1a2b3c4d5e6f7a8b9c0d1"),
+)
 ```
 
 ---
@@ -74,7 +96,7 @@ client, err := eyedux.New("sua-api-key", eyedux.WithHTTPClient(meuHTTPClient))
 ### `client.CreateEvent`
 
 ```go
-event, err := client.CreateEvent(ctx context.Context, input eyedux.CreateEventInput) (*eyedux.Event, error)
+event, err := client.CreateEvent(ctx context.Context, input eyeduxsdk.CreateEventInput) (*eyeduxsdk.Event, error)
 ```
 
 Ingere um novo evento. Retorna o evento criado em sucesso (`201`).
@@ -83,15 +105,15 @@ Ingere um novo evento. Retorna o evento criado em sucesso (`201`).
 extID := "evt_01HX92K"
 corrID := "session_abc123"
 
-event, err := client.CreateEvent(ctx, eyedux.CreateEventInput{
+event, err := client.CreateEvent(ctx, eyeduxsdk.CreateEventInput{
     ProjectID: "64f1a2b3c4d5e6f7a8b9c0d1",
     Type:      "user.signup",
     Properties: map[string]any{"plan": "pro"},
-    ExternalObject: &eyedux.EventObject{
+    ExternalObject: &eyeduxsdk.EventObject{
         ID:       extID,
         Property: "orderId",
     },
-    CorrelationObject: &eyedux.EventObject{
+    CorrelationObject: &eyeduxsdk.EventObject{
         ID:       corrID,
         Property: "sessionId",
     },
@@ -101,23 +123,44 @@ event, err := client.CreateEvent(ctx, eyedux.CreateEventInput{
 
 ---
 
+### `EventEyeduxType`
+
+Use the predefined constants instead of declaring a string and taking its
+address manually:
+
+```go
+event, err := client.CreateEvent(ctx, eyeduxsdk.CreateEventInput{
+    ProjectID:  "64f1a2b3c4d5e6f7a8b9c0d1",
+    Type:       "api.error",
+    EyeduxType: eyeduxsdk.EventEyeduxTypeSystemError,
+    Properties: map[string]any{"message": "request failed"},
+})
+```
+
+Available values are `EventEyeduxTypeSystemError`,
+`EventEyeduxTypeSystemWarning`, `EventEyeduxTypeSystemLog`,
+`EventEyeduxTypeSystemDebug`, `EventEyeduxTypeSystemInfo` and
+`EventEyeduxTypeSystemMetric`.
+
+---
+
 ### `client.ListEvents`
 
 ```go
-events, err := client.ListEvents(ctx context.Context, input eyedux.ListEventsInput) ([]eyedux.Event, error)
+events, err := client.ListEvents(ctx context.Context, input eyeduxsdk.ListEventsInput) ([]eyeduxsdk.Event, error)
 ```
 
 Lista todos os eventos da organização. Filtros são opcionais e cumulativos. Retorna `[]Event{}` (nunca `nil`) quando não há resultados.
 
 ```go
 // Sem filtros
-events, err := client.ListEvents(ctx, eyedux.ListEventsInput{})
+events, err := client.ListEvents(ctx, eyeduxsdk.ListEventsInput{})
 
 // Com filtros
 typ := "user.signup"
 corrID := "session_abc123"
 
-events, err := client.ListEvents(ctx, eyedux.ListEventsInput{
+events, err := client.ListEvents(ctx, eyeduxsdk.ListEventsInput{
     Type:          &typ,
     CorrelationID: &corrID,
 })
@@ -128,14 +171,14 @@ events, err := client.ListEvents(ctx, eyedux.ListEventsInput{
 ### `client.FindEventByExternalID`
 
 ```go
-event, err := client.FindEventByExternalID(ctx context.Context, externalID string) (*eyedux.Event, error)
+event, err := client.FindEventByExternalID(ctx context.Context, externalID string) (*eyeduxsdk.Event, error)
 ```
 
 Busca um único evento pelo ID definido no `ExternalObject`. Retorna `ErrEmptyExternalID` se `externalID` for vazio.
 
 ```go
 event, err := client.FindEventByExternalID(ctx, "evt_01HX92K")
-if eyedux.IsNotFound(err) {
+if eyeduxsdk.IsNotFound(err) {
     // evento não existe
 }
 ```
@@ -144,12 +187,12 @@ if eyedux.IsNotFound(err) {
 
 ## Tratamento de erros
 
-Erros da API são do tipo `*eyedux.APIError` e expõem `StatusCode`, `Code` e `Message`.
+Erros da API são do tipo `*eyeduxsdk.APIError` e expõem `StatusCode`, `Code` e `Message`.
 
 ```go
 event, err := client.CreateEvent(ctx, input)
 if err != nil {
-    var apiErr *eyedux.APIError
+    var apiErr *eyeduxsdk.APIError
     if errors.As(err, &apiErr) {
         fmt.Printf("status %d — código: %s\n", apiErr.StatusCode, apiErr.Code)
     }
@@ -160,10 +203,11 @@ if err != nil {
 **Helpers de inspeção**
 
 ```go
-eyedux.IsNotFound(err)    // 404 — external_id não encontrado
-eyedux.IsConflict(err)    // 409 — external_id duplicado
-eyedux.IsRateLimited(err) // 429 — rate limit excedido
-eyedux.IsAuthError(err)   // 422 invalid_api_key
+eyeduxsdk.IsNotFound(err)    // 404 — external_id não encontrado
+eyeduxsdk.IsConflict(err)    // 409 — external_object duplicado
+eyeduxsdk.IsExternalObjectConflict(err)
+eyeduxsdk.IsRateLimited(err) // 429 — rate limit excedido
+eyeduxsdk.IsAuthError(err)   // 422 invalid_api_key
 ```
 
 **Rate limiting**
@@ -171,8 +215,8 @@ eyedux.IsAuthError(err)   // 422 invalid_api_key
 Quando `IsRateLimited(err)` for `true`, o campo `RetryAfter` indica quantos segundos aguardar:
 
 ```go
-if eyedux.IsRateLimited(err) {
-    var apiErr *eyedux.APIError
+if eyeduxsdk.IsRateLimited(err) {
+    var apiErr *eyeduxsdk.APIError
     errors.As(err, &apiErr)
     if apiErr.RetryAfter != nil {
         time.Sleep(time.Duration(*apiErr.RetryAfter) * time.Second)
@@ -190,7 +234,7 @@ O SDK não implementa retry automático — a política de retry fica a cargo do
 |-------|------|----------|
 | `ID` | `string` | Sempre |
 | `Environment` | `string` | Ambiente da API key |
-| `EyeduxType` | `*string` | `nil` quando não definido |
+| `EyeduxType` | `*EventEyeduxType` | `nil` quando não definido |
 | `Type` | `string` | Sempre |
 | `TypeGroup` | `string` | Vazio quando não definido |
 | `Properties` | `map[string]any` | Sempre |

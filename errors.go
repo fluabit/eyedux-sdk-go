@@ -7,19 +7,20 @@ import (
 
 // API error codes returned by the Eyedux API.
 const (
-	ErrCodeInvalidAPIKey           = "invalid_api_key"
-	ErrCodeEventTypeRequired       = "event_type_required"
-	ErrCodeEventPropertiesEmpty    = "event_properties_empty"
+	ErrCodeInvalidAPIKey               = "invalid_api_key"
+	ErrCodeEventTypeRequired           = "event_type_required"
+	ErrCodeEventPropertiesEmpty        = "event_properties_empty"
 	ErrCodeEventExternalObjectConflict = "event_external_object_conflict"
 	ErrCodeEventExternalIDNotFound     = "event_external_id_not_found"
 	ErrCodeEventExternalIDRequired     = "event_external_id_required"
-	ErrCodeRateLimitExceeded       = "RATE_LIMIT_EXCEEDED"
-	ErrCodeInternalServerError     = "INTERNAL_SERVER_ERROR"
+	ErrCodeRateLimitExceeded           = "RATE_LIMIT_EXCEEDED"
+	ErrCodeInternalServerError         = "INTERNAL_SERVER_ERROR"
 )
 
 // SDK-level sentinel errors, independent of the API response.
 var (
 	ErrEmptyAPIKey     = errors.New("eyedux: api key must not be empty")
+	ErrEmptyProjectID  = errors.New("eyedux: project id must not be empty")
 	ErrEmptyExternalID = errors.New("eyedux: external_id must not be empty")
 )
 
@@ -46,6 +47,12 @@ func IsNotFound(err error) bool {
 func IsConflict(err error) bool {
 	var e *APIError
 	return errors.As(err, &e) && e.StatusCode == 409
+}
+
+// IsExternalObjectConflict reports whether err indicates a duplicate external object.
+func IsExternalObjectConflict(err error) bool {
+	var e *APIError
+	return errors.As(err, &e) && e.Code == ErrCodeEventExternalObjectConflict
 }
 
 // IsRateLimited reports whether err is a 429 API error.

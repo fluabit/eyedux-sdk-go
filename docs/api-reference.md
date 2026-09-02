@@ -354,7 +354,7 @@ Representa um evento retornado pela API. Campos opcionais são sempre presentes 
 | `timestamp` | `time.Time` | RFC3339 |
 | `created_at` | `time.Time` | RFC3339 |
 | `environment` | `string` | Ambiente da API key |
-| `eyedux_type` | `*string` | `null` quando não definido |
+| `eyedux_type` | `*EventEyeduxType` | `null` quando não definido |
 | `type_group` | `string` | Vazio quando não definido |
 | `external_object` | `*EventObject` | `null` quando não definido |
 | `correlation_object` | `*EventObject` | `null` quando não definido |
@@ -370,7 +370,7 @@ Entrada para criação de evento.
 | `Type` | `string` | Sim |
 | `Properties` | `map[string]any` | Sim |
 | `TypeGroup` | `string` | Não |
-| `EyeduxType` | `*string` | Não |
+| `EyeduxType` | `EventEyeduxType` | Não |
 | `ExternalObject` | `*EventObject` | Não |
 | `CorrelationObject` | `*EventObject` | Não |
 | `Metadata` | `map[string]any` | Não |
@@ -383,6 +383,23 @@ Filtros para listagem de eventos.
 |-------|-----------------|-------------|
 | `Type` | `*string` | Não |
 | `CorrelationID` | `*string` | Não |
+
+### EventEyeduxType
+
+O SDK expõe os tipos predefinidos de evento como constantes descobríveis pelo
+autocomplete:
+
+| Constante | Valor JSON |
+|-----------|------------|
+| `EventEyeduxTypeSystemError` | `system-error` |
+| `EventEyeduxTypeSystemWarning` | `system-warning` |
+| `EventEyeduxTypeSystemLog` | `system-log` |
+| `EventEyeduxTypeSystemDebug` | `system-debug` |
+| `EventEyeduxTypeSystemInfo` | `system-info` |
+| `EventEyeduxTypeSystemMetric` | `system-metric` |
+
+`CreateEventInput.EyeduxType` usa o valor vazio quando o campo não deve ser
+enviado. `Event.EyeduxType` é `nil` quando a API retorna `null`.
 
 ---
 

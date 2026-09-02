@@ -52,10 +52,40 @@ func TestNew_validAPIKey(t *testing.T) {
 	}
 }
 
+func TestNewWithConfig_requiresProjectID(t *testing.T) {
+	_, err := NewWithConfig(Config{APIKey: "key"})
+	if !errors.Is(err, ErrEmptyProjectID) {
+		t.Errorf("err = %v, want ErrEmptyProjectID", err)
+	}
+}
+
+func TestNewWithConfig_valid(t *testing.T) {
+	c, err := NewWithConfig(Config{APIKey: "key", ProjectID: "project"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if c.projectID != "project" {
+		t.Errorf("projectID = %q, want project", c.projectID)
+	}
+}
+
+func TestNewFromEnv_readsOnlyAPIKey(t *testing.T) {
+	t.Setenv("EYEDUX_API_KEY", "key")
+	t.Setenv("EYEDUX_PROJECT_ID", "ignored")
+
+	c, err := NewFromEnv()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if c.projectID != "" {
+		t.Errorf("projectID = %q, want empty", c.projectID)
+	}
+}
+
 // ---- CreateEvent ----
 
 func TestCreateEvent_success(t *testing.T) {
-	eyeduxType := "system-log"
+	eyeduxType := EventEyeduxTypeSystemLog
 
 	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
@@ -71,7 +101,7 @@ func TestCreateEvent_success(t *testing.T) {
 			t.Errorf("Content-Type = %q, want application/json", got)
 		}
 		var requestBody struct {
-			EyeduxType *string `json:"eyedux_type"`
+			EyeduxType *EventEyeduxType `json:"eyedux_type"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
 			t.Fatalf("decode request body: %v", err)
@@ -96,7 +126,7 @@ func TestCreateEvent_success(t *testing.T) {
 	event, err := c.CreateEvent(context.Background(), CreateEventInput{
 		ProjectID:  "64f1a2b3c4d5e6f7a8b9c0d1",
 		Type:       "user.signup",
-		EyeduxType: &eyeduxType,
+		EyeduxType: eyeduxType,
 		Properties: map[string]any{"plan": "pro"},
 	})
 	if err != nil {
@@ -119,6 +149,80 @@ func TestCreateEvent_success(t *testing.T) {
 	}
 }
 
+func TestCreateEvent_usesDefaultProjectAndMetadata(t *testing.T) {
+	requestCount := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestCount++
+		var requestBody struct {
+			ProjectID string         `json:"project_id"`
+			Metadata  map[string]any `json:"metadata"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
+			t.Fatalf("decode request body: %v", err)
+		}
+		expectedProjectID := "default-project"
+		if requestCount == 2 {
+			expectedProjectID = "explicit-project"
+		}
+		if requestBody.ProjectID != expectedProjectID {
+			t.Errorf("project_id = %q, want %s", requestBody.ProjectID, expectedProjectID)
+		}
+		if requestBody.Metadata["service"] != "api" {
+			t.Errorf("metadata.service = %v, want api", requestBody.Metadata["service"])
+		}
+		if requestBody.Metadata["environment"] != "test" {
+			t.Errorf("metadata.environment = %v, want test", requestBody.Metadata["environment"])
+		}
+		writeJSON(w, http.StatusCreated, map[string]any{"data": map[string]any{"id": "abc123"}})
+	}))
+	t.Cleanup(server.Close)
+
+	c, err := New("key",
+		WithProjectID("default-project"),
+		WithDefaultMetadata(map[string]any{"service": "eyedux", "environment": "test"}),
+	)
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	c.baseURL = server.URL
+
+	_, err = c.CreateEvent(context.Background(), CreateEventInput{
+		Type:       "api.request",
+		Properties: map[string]any{"method": "GET"},
+		Metadata:   map[string]any{"service": "api"},
+	})
+	if err != nil {
+		t.Fatalf("CreateEvent: %v", err)
+	}
+	_, err = c.CreateEvent(context.Background(), CreateEventInput{
+		Type:       "api.request",
+		ProjectID:  "explicit-project",
+		Properties: map[string]any{"method": "GET"},
+		Metadata:   map[string]any{"service": "api"},
+	})
+	if err != nil {
+		t.Fatalf("CreateEvent: %v", err)
+	}
+}
+
+func TestCreateEvent_requiresProjectID(t *testing.T) {
+	requestCount := 0
+	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		requestCount++
+	})
+
+	_, err := c.CreateEvent(context.Background(), CreateEventInput{
+		Type:       "api.error",
+		Properties: map[string]any{"message": "failed"},
+	})
+	if !errors.Is(err, ErrEmptyProjectID) {
+		t.Errorf("err = %v, want ErrEmptyProjectID", err)
+	}
+	if requestCount != 0 {
+		t.Errorf("requestCount = %d, want 0", requestCount)
+	}
+}
+
 func TestCreateEvent_conflict(t *testing.T) {
 	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusConflict, apiErrorBody(ErrCodeEventExternalObjectConflict, "conflict"))
@@ -131,6 +235,9 @@ func TestCreateEvent_conflict(t *testing.T) {
 	})
 	if !IsConflict(err) {
 		t.Errorf("expected conflict error, got %v", err)
+	}
+	if !IsExternalObjectConflict(err) {
+		t.Errorf("expected external object conflict, got %v", err)
 	}
 	var apiErr *APIError
 	if !errors.As(err, &apiErr) || apiErr.Code != ErrCodeEventExternalObjectConflict {
