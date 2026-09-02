@@ -14,8 +14,8 @@ exclude_docs: |
 theme:
   name: material
   language: pt-BR
-  icon:
-    logo: material/eye-outline
+  logo: assets/eyedux-logo-color.png
+  favicon: assets/eyedux-logo-color.png
   font:
     text: Manrope
     code: IBM Plex Mono

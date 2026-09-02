@@ -1,5 +1,7 @@
 <div class="eyedux-hero" markdown>
 
+<img src="assets/eyedux-logo-color.png" alt="Eyedux" class="eyedux-hero__logo">
+
 <div class="eyedux-hero__eyebrow">SDK oficial · Go 1.21+</div>
 
 # Eyedux SDK para Go
