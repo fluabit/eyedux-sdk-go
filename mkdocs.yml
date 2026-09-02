@@ -1,0 +1,78 @@
+site_name: Eyedux SDK para Go
+site_description: Documentação oficial para integrar aplicações Go ao Eyedux.
+site_url: https://fluabit.github.io/eyedux-sdk-go/
+repo_name: fluabit/eyedux-sdk-go
+repo_url: https://github.com/fluabit/eyedux-sdk-go
+edit_uri: edit/main/docs/
+copyright: Eyedux SDK para Go
+
+docs_dir: docs
+site_dir: site
+exclude_docs: |
+  README.md
+
+theme:
+  name: material
+  language: pt-BR
+  icon:
+    logo: material/eye-outline
+  font:
+    text: Manrope
+    code: IBM Plex Mono
+  features:
+    - navigation.instant
+    - navigation.sections
+    - navigation.top
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+    - content.code.annotate
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: orange
+      toggle:
+        icon: material/weather-sunny
+        name: Usar tema escuro
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: orange
+      toggle:
+        icon: material/weather-night
+        name: Usar tema claro
+
+plugins:
+  - search:
+      lang: pt
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+extra_css:
+  - stylesheets/extra.css
+
+extra:
+  generator: false
+
+nav:
+  - Início: index.md
+  - Integração: client-integration.md
+  - Referência da API: api-reference.md

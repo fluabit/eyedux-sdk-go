@@ -14,3 +14,17 @@ Documentação pública do SDK e guia de integração para clients.
 
 As decisões de arquitetura e propostas de evolução ficam em `internal/` e não
 fazem parte do site público.
+
+## Preview local
+
+O site usa [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/).
+Para visualizar alterações antes do push:
+
+```sh
+python3 -m venv .venv-docs
+.venv-docs/bin/python -m pip install -r requirements-docs.txt
+.venv-docs/bin/mkdocs serve
+```
+
+Abra `http://127.0.0.1:8000` no navegador. O diretório `.venv-docs/` é local e
+não deve ser versionado.

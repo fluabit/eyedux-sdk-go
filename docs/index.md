@@ -1,19 +1,43 @@
----
-title: Eyedux SDK para Go
----
+<div class="eyedux-hero" markdown>
+
+<div class="eyedux-hero__eyebrow">SDK oficial · Go 1.21+</div>
 
 # Eyedux SDK para Go
 
-Documentação para integrar aplicações servidoras ao Eyedux usando o SDK
-oficial para Go.
+<p class="eyedux-hero__lede">Integre eventos de aplicações Go ao Eyedux com uma API pequena, tipada e pronta para produção.</p>
 
-## Comece por aqui
+<div class="eyedux-hero__actions" markdown>
 
-- [Guia de integração para clients](client-integration.md)
-- [Referência completa da API](api-reference.md)
+[Começar a integrar](client-integration.md){ .md-button .md-button--primary }
+[Ver a referência da API](api-reference.md){ .md-button }
 
-## Sobre esta publicação
+</div>
+</div>
 
-Este site é composto por Markdown e pode ser publicado pelo GitHub Pages a
-partir da pasta `/docs`. O SDK e a API key devem ser usados no backend do
-client; GitHub Pages serve apenas a documentação estática.
+## Encontre o caminho certo
+
+<div class="grid cards" markdown>
+
+- :material-rocket-launch-outline: **Integração em minutos**
+
+	Configure a API key, defina o projeto e envie seu primeiro evento.
+
+	[Abrir o guia](client-integration.md)
+
+- :material-api: **Contrato da API**
+
+	Consulte endpoints, modelos, autenticação, códigos de erro e rate limit.
+
+	[Consultar a referência](api-reference.md)
+
+- :material-shield-check-outline: **Pronto para backend**
+
+	Mantenha segredos no servidor, propague contextos e trate falhas sem
+	esconder decisões de negócio.
+
+</div>
+
+!!! warning "API key"
+
+	O SDK deve ser usado no backend. Nunca exponha a API key em JavaScript do
+	navegador, aplicações mobile ou repositórios.

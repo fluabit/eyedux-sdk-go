@@ -1,0 +1,118 @@
+:root {
+  --eyedux-ink: #17324d;
+  --eyedux-teal: #087f7b;
+  --eyedux-coral: #ed6a4a;
+  --eyedux-mist: #f1f7f6;
+  --eyedux-slate: #101b26;
+}
+
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: var(--eyedux-ink);
+  --md-primary-fg-color--light: #315a78;
+  --md-primary-fg-color--dark: #10263a;
+  --md-accent-fg-color: var(--eyedux-coral);
+  --md-default-bg-color: #fbfcfc;
+  --md-code-bg-color: #f1f5f4;
+  --md-typeset-a-color: var(--eyedux-teal);
+}
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #143e52;
+  --md-primary-fg-color--light: #236779;
+  --md-primary-fg-color--dark: #0d2d3c;
+  --md-accent-fg-color: #ff9474;
+  --md-default-bg-color: var(--eyedux-slate);
+  --md-code-bg-color: #172735;
+  --md-typeset-a-color: #73d0c7;
+}
+
+body {
+  font-family: "Manrope", "Avenir Next", sans-serif;
+}
+
+.md-header {
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.md-header__title {
+  font-weight: 800;
+}
+
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3 {
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.md-typeset code,
+.md-typeset pre code {
+  font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
+}
+
+.eyedux-hero {
+  background: linear-gradient(135deg, var(--eyedux-mist) 0%, #fff7f2 100%);
+  border: 1px solid rgba(8, 127, 123, 0.18);
+  border-inline-start: 6px solid var(--eyedux-coral);
+  border-radius: 8px;
+  margin: 0 0 2rem;
+  padding: 2.5rem 2.75rem;
+}
+
+[data-md-color-scheme="slate"] .eyedux-hero {
+  background: linear-gradient(135deg, #142c39 0%, #26323c 100%);
+  border-color: rgba(115, 208, 199, 0.26);
+}
+
+.eyedux-hero__eyebrow {
+  color: var(--eyedux-coral);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.eyedux-hero h1 {
+  font-size: 3.4rem;
+  line-height: 1.05;
+  margin: 0.5rem 0 1rem;
+}
+
+.eyedux-hero__lede {
+  font-size: 1.1rem;
+  max-width: 42rem;
+}
+
+.eyedux-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.eyedux-hero__actions .md-button {
+  margin: 0;
+}
+
+.md-typeset .grid.cards > ul > li {
+  border-top: 3px solid var(--eyedux-teal);
+  border-radius: 8px;
+}
+
+.md-typeset .grid.cards > ul > li strong {
+  color: var(--eyedux-ink);
+}
+
+[data-md-color-scheme="slate"] .md-typeset .grid.cards > ul > li strong {
+  color: #d6f0ed;
+}
+
+@media screen and (max-width: 600px) {
+  .eyedux-hero {
+    padding: 1.75rem 1.25rem;
+  }
+
+  .eyedux-hero h1 {
+    font-size: 2rem;
+  }
+}

@@ -254,10 +254,11 @@ O SDK não implementa retry automático — a política de retry fica a cargo do
 | [docs/client-integration.md](docs/client-integration.md) | Clients do SDK | Guia de instalação, configuração e integração com o Eyedux |
 | [docs/api-reference.md](docs/api-reference.md) | Devs que integram o SDK | Contrato completo da Public API |
 
-A documentação é publicada como um site estático pelo GitHub Pages. O workflow
-em `.github/workflows/pages.yml` envia `docs/` para o Pages. Consulte o [guia de
-integração](docs/client-integration.md) para habilitar o source **GitHub
-Actions** e executar a publicação.
+A documentação é construída com [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/)
+e publicada como um site estático pelo GitHub Pages. O workflow em
+`.github/workflows/pages.yml` transforma `docs/` em HTML e envia o site para o
+Pages. Consulte o [guia de integração](docs/client-integration.md) para
+habilitar o source **GitHub Actions** e executar a publicação.
 
 ## Documentação de manutenção
 

@@ -5,15 +5,15 @@
 ## Índice
 
 1. [Base URL e ambiente](#base-url-e-ambiente)
-2. [Autenticação](#autenticação)
+2. [Autenticação](#autenticacao)
 3. [Envelope de resposta](#envelope-de-resposta)
 4. [Rate limiting](#rate-limiting)
 5. [Endpoints](#endpoints)
-   - [POST /public/logs — Criar evento](#post-publiclogs--criar-evento)
-   - [GET /public/logs — Listar eventos](#get-publiclogs--listar-eventos)
-   - [GET /public/logs/external/:external_id — Buscar por ID externo](#get-publiclogsexternalexternal_id--buscar-por-id-externo)
+  - [POST /public/logs — Criar evento](#post-publiclogs-criar-evento)
+  - [GET /public/logs — Listar eventos](#get-publiclogs-listar-eventos)
+  - [GET /public/logs/external/:external_id — Buscar por ID externo](#get-publiclogsexternalexternal_id-buscar-por-id-externo)
 6. [Modelos de dados](#modelos-de-dados)
-7. [Códigos de erro](#códigos-de-erro)
+7. [Códigos de erro](#codigos-de-erro)
 
 ---
 
