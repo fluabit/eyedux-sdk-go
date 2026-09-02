@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 // newTestClient spins up an httptest.Server with handler and returns a Client pointed at it.
@@ -21,6 +23,12 @@ func newTestClient(t *testing.T, handler http.HandlerFunc) *Client {
 	}
 	c.baseURL = srv.URL
 	return c
+}
+
+type roundTripperFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripperFunc) RoundTrip(r *http.Request) (*http.Response, error) {
+	return f(r)
 }
 
 func writeJSON(w http.ResponseWriter, status int, body any) {
@@ -42,6 +50,30 @@ func TestNew_emptyAPIKey(t *testing.T) {
 	}
 }
 
+func TestNew_trimsAPIKeyAndAppliesTimeout(t *testing.T) {
+	c, err := New(" key ", WithTimeout(2*time.Second))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if c.apiKey != "key" {
+		t.Errorf("apiKey = %q, want key", c.apiKey)
+	}
+	if c.httpClient.Timeout != 2*time.Second {
+		t.Errorf("timeout = %s, want 2s", c.httpClient.Timeout)
+	}
+}
+
+func TestNew_usesCustomHTTPClient(t *testing.T) {
+	httpClient := &http.Client{}
+	c, err := New("key", WithHTTPClient(httpClient))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if c.httpClient != httpClient {
+		t.Error("client did not use the configured HTTP client")
+	}
+}
+
 func TestNew_validAPIKey(t *testing.T) {
 	c, err := New("key")
 	if err != nil {
@@ -59,13 +91,38 @@ func TestNewWithConfig_requiresProjectID(t *testing.T) {
 	}
 }
 
+func TestNewWithConfig_requiresAPIKey(t *testing.T) {
+	_, err := NewWithConfig(Config{ProjectID: "project"})
+	if !errors.Is(err, ErrEmptyAPIKey) {
+		t.Errorf("err = %v, want ErrEmptyAPIKey", err)
+	}
+}
+
 func TestNewWithConfig_valid(t *testing.T) {
-	c, err := NewWithConfig(Config{APIKey: "key", ProjectID: "project"})
+	httpClient := &http.Client{}
+	metadata := map[string]any{"service": "api"}
+	c, err := NewWithConfig(Config{
+		APIKey:          "key",
+		ProjectID:       " project ",
+		HTTPClient:      httpClient,
+		Timeout:         2 * time.Second,
+		DefaultMetadata: metadata,
+	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if c.projectID != "project" {
 		t.Errorf("projectID = %q, want project", c.projectID)
+	}
+	if c.httpClient != httpClient {
+		t.Error("client did not use the configured HTTP client")
+	}
+	if c.defaultMetadata["service"] != "api" {
+		t.Errorf("default metadata = %v, want service=api", c.defaultMetadata)
+	}
+	metadata["service"] = "changed"
+	if c.defaultMetadata["service"] != "api" {
+		t.Error("client metadata changed when the source map was mutated")
 	}
 }
 
@@ -82,12 +139,43 @@ func TestNewFromEnv_readsOnlyAPIKey(t *testing.T) {
 	}
 }
 
+func TestNewFromEnv_requiresAPIKey(t *testing.T) {
+	t.Setenv("EYEDUX_API_KEY", "")
+
+	_, err := NewFromEnv()
+	if !errors.Is(err, ErrEmptyAPIKey) {
+		t.Errorf("err = %v, want ErrEmptyAPIKey", err)
+	}
+}
+
+func TestEventEyeduxTypeValues(t *testing.T) {
+	tests := []struct {
+		name  string
+		value EventEyeduxType
+		want  string
+	}{
+		{name: "system error", value: EventEyeduxTypeSystemError, want: "system-error"},
+		{name: "system warning", value: EventEyeduxTypeSystemWarning, want: "system-warning"},
+		{name: "system log", value: EventEyeduxTypeSystemLog, want: "system-log"},
+		{name: "system debug", value: EventEyeduxTypeSystemDebug, want: "system-debug"},
+		{name: "system info", value: EventEyeduxTypeSystemInfo, want: "system-info"},
+		{name: "system metric", value: EventEyeduxTypeSystemMetric, want: "system-metric"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if string(test.value) != test.want {
+				t.Errorf("value = %q, want %q", test.value, test.want)
+			}
+		})
+	}
+}
+
 // ---- CreateEvent ----
 
-func TestCreateEvent_success(t *testing.T) {
-	eyeduxType := EventEyeduxTypeSystemLog
-
-	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+func successCreateEventHandler(t *testing.T, expectedEyeduxType EventEyeduxType) http.HandlerFunc {
+	t.Helper()
+	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			t.Errorf("method = %s, want POST", r.Method)
 		}
@@ -106,8 +194,8 @@ func TestCreateEvent_success(t *testing.T) {
 		if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
 			t.Fatalf("decode request body: %v", err)
 		}
-		if requestBody.EyeduxType == nil || *requestBody.EyeduxType != eyeduxType {
-			t.Errorf("eyedux_type = %v, want %q", requestBody.EyeduxType, eyeduxType)
+		if requestBody.EyeduxType == nil || *requestBody.EyeduxType != expectedEyeduxType {
+			t.Errorf("eyedux_type = %v, want %q", requestBody.EyeduxType, expectedEyeduxType)
 		}
 		writeJSON(w, http.StatusCreated, map[string]any{
 			"data": map[string]any{
@@ -121,7 +209,13 @@ func TestCreateEvent_success(t *testing.T) {
 				"created_at":  "2026-08-13T10:00:01Z",
 			},
 		})
-	})
+	}
+}
+
+func TestCreateEvent_success(t *testing.T) {
+	eyeduxType := EventEyeduxTypeSystemLog
+
+	c := newTestClient(t, successCreateEventHandler(t, eyeduxType))
 
 	event, err := c.CreateEvent(context.Background(), CreateEventInput{
 		ProjectID:  "64f1a2b3c4d5e6f7a8b9c0d1",
@@ -220,6 +314,107 @@ func TestCreateEvent_requiresProjectID(t *testing.T) {
 	}
 	if requestCount != 0 {
 		t.Errorf("requestCount = %d, want 0", requestCount)
+	}
+}
+
+func TestCreateEvent_omitsEmptyEyeduxType(t *testing.T) {
+	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		var requestBody map[string]json.RawMessage
+		if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
+			t.Fatalf("decode request body: %v", err)
+		}
+		if _, ok := requestBody["eyedux_type"]; ok {
+			t.Error("eyedux_type must be omitted when empty")
+		}
+		writeJSON(w, http.StatusCreated, map[string]any{"data": map[string]any{"id": "abc123"}})
+	})
+
+	_, err := c.CreateEvent(context.Background(), CreateEventInput{
+		ProjectID:  "project",
+		Type:       "api.request",
+		Properties: map[string]any{"method": "GET"},
+	})
+	if err != nil {
+		t.Fatalf("CreateEvent: %v", err)
+	}
+}
+
+func TestCreateEvent_returnsMarshalErrorWithoutRequest(t *testing.T) {
+	requestCount := 0
+	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		requestCount++
+	})
+
+	_, err := c.CreateEvent(context.Background(), CreateEventInput{
+		ProjectID: "project",
+		Type:      "api.request",
+		Properties: map[string]any{
+			"unsupported": func() {},
+		},
+	})
+	if err == nil {
+		t.Fatal("CreateEvent must return an error for an unserializable property")
+	}
+	if requestCount != 0 {
+		t.Errorf("requestCount = %d, want 0", requestCount)
+	}
+}
+
+func TestCreateEvent_propagatesContextCancellation(t *testing.T) {
+	httpClient := &http.Client{}
+	c, err := New("key", WithHTTPClient(httpClient), WithProjectID("project"))
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	c.httpClient.Transport = roundTripperFunc(func(r *http.Request) (*http.Response, error) {
+		<-r.Context().Done()
+		return nil, r.Context().Err()
+	})
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	_, err = c.CreateEvent(ctx, CreateEventInput{
+		Type:       "api.request",
+		Properties: map[string]any{"method": "GET"},
+	})
+	if !errors.Is(err, context.Canceled) {
+		t.Errorf("err = %v, want context.Canceled", err)
+	}
+}
+
+func TestCreateEvent_returnsDecodeErrorForInvalidSuccessResponse(t *testing.T) {
+	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusCreated)
+		_, _ = io.WriteString(w, "{")
+	})
+
+	_, err := c.CreateEvent(context.Background(), CreateEventInput{
+		ProjectID:  "project",
+		Type:       "api.request",
+		Properties: map[string]any{"method": "GET"},
+	})
+	if err == nil {
+		t.Fatal("CreateEvent must return an error for invalid JSON")
+	}
+}
+
+func TestCreateEvent_preservesStatusForMalformedAPIError(t *testing.T) {
+	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadGateway)
+		_, _ = io.WriteString(w, "upstream failure")
+	})
+
+	_, err := c.CreateEvent(context.Background(), CreateEventInput{
+		ProjectID:  "project",
+		Type:       "api.request",
+		Properties: map[string]any{"method": "GET"},
+	})
+	var apiErr *APIError
+	if !errors.As(err, &apiErr) {
+		t.Fatalf("expected *APIError, got %T", err)
+	}
+	if apiErr.StatusCode != http.StatusBadGateway {
+		t.Errorf("status = %d, want %d", apiErr.StatusCode, http.StatusBadGateway)
 	}
 }
 
@@ -352,6 +547,23 @@ func TestListEvents_empty(t *testing.T) {
 	}
 }
 
+func TestListEvents_nullDataReturnsEmptySlice(t *testing.T) {
+	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, http.StatusOK, map[string]any{"data": nil})
+	})
+
+	events, err := c.ListEvents(context.Background(), ListEventsInput{})
+	if err != nil {
+		t.Fatalf("ListEvents: %v", err)
+	}
+	if events == nil {
+		t.Fatal("events must not be nil when data is null")
+	}
+	if len(events) != 0 {
+		t.Errorf("len(events) = %d, want 0", len(events))
+	}
+}
+
 func TestListEvents_withFilters(t *testing.T) {
 	wantType := "user.signup"
 	wantCorrID := "session_abc"
@@ -455,6 +667,25 @@ func TestIsConflict(t *testing.T) {
 	}
 	if !IsConflict(&APIError{StatusCode: 409}) {
 		t.Error("IsConflict(409) must be true")
+	}
+}
+
+func TestIsExternalObjectConflict(t *testing.T) {
+	if IsExternalObjectConflict(nil) {
+		t.Error("IsExternalObjectConflict(nil) must be false")
+	}
+	if IsExternalObjectConflict(&APIError{StatusCode: 409}) {
+		t.Error("missing error code must not be treated as an external object conflict")
+	}
+	if !IsExternalObjectConflict(&APIError{Code: ErrCodeEventExternalObjectConflict}) {
+		t.Error("matching error code must be treated as an external object conflict")
+	}
+}
+
+func TestAPIError_Error(t *testing.T) {
+	err := (&APIError{StatusCode: http.StatusConflict, Code: ErrCodeEventExternalObjectConflict}).Error()
+	if err != "eyedux: event_external_object_conflict (status 409)" {
+		t.Errorf("error = %q, want formatted API error", err)
 	}
 }
 
