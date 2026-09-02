@@ -331,19 +331,22 @@ GitHub Pages sem um servidor Go. O GitHub Pages hospeda os arquivos estáticos;
 ele não executa o SDK, não guarda a API key com segurança e não deve receber
 eventos diretamente do navegador.
 
-O caminho mais simples é usar a pasta `docs/` deste repositório:
+Este repositório já contém o workflow
+`.github/workflows/pages.yml`, que publica a pasta `docs/`:
 
 1. Faça push do repositório para o GitHub.
 2. Abra `Settings > Pages` no repositório.
-3. Em **Build and deployment**, escolha **Deploy from a branch**.
-4. Selecione a branch publicada e a pasta `/docs`.
-5. Salve e aguarde o workflow de publicação terminar.
+3. Em **Build and deployment > Source**, escolha **GitHub Actions**.
+4. Salve e execute o workflow `Deploy documentation to GitHub Pages`, ou faça
+	push na branch `main`.
+5. Aguarde o job de deploy terminar e abra a URL informada pelo ambiente
+	`github-pages`.
 
 O arquivo `docs/index.md` funciona como a página inicial e aponta para este
-guia, a referência da API e as decisões de arquitetura. Não é necessário
-adicionar um backend para publicar a documentação. Se o projeto precisar de
-busca, navegação avançada ou versionamento, um gerador estático como MkDocs
-ou Docusaurus pode ser adicionado depois via GitHub Actions.
+guia e a referência da API. Não é necessário adicionar um backend para
+publicar a documentação. Se o projeto precisar de busca, navegação avançada ou
+versionamento, um gerador estático como MkDocs ou Docusaurus pode ser adicionado
+depois ao job de build.
 
 ## Próximo documento
 

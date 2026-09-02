@@ -254,9 +254,10 @@ O SDK não implementa retry automático — a política de retry fica a cargo do
 | [docs/client-integration.md](docs/client-integration.md) | Clients do SDK | Guia de instalação, configuração e integração com o Eyedux |
 | [docs/api-reference.md](docs/api-reference.md) | Devs que integram o SDK | Contrato completo da Public API |
 
-A documentação pode ser publicada como um site estático pelo GitHub Pages,
-usando `docs/` como diretório de publicação. Consulte o [guia de integração](docs/client-integration.md)
-para os passos e as limitações dessa opção.
+A documentação é publicada como um site estático pelo GitHub Pages. O workflow
+em `.github/workflows/pages.yml` envia `docs/` para o Pages. Consulte o [guia de
+integração](docs/client-integration.md) para habilitar o source **GitHub
+Actions** e executar a publicação.
 
 ## Documentação de manutenção
 
