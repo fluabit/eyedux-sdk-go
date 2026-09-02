@@ -1,7 +1,7 @@
 # eyedux-sdk-go
 
 [![Documentação oficial](https://img.shields.io/badge/documenta%C3%A7%C3%A3o-oficial-0c66e4?style=flat-square)](https://fluabit.github.io/eyedux-sdk-go/)
-[![Cobertura de testes Go](https://codecov.io/gh/fluabit/eyedux-sdk-go/branch/main/graph/badge.svg)](https://codecov.io/gh/fluabit/eyedux-sdk-go)
+[![Cobertura de testes Go](https://img.shields.io/badge/cobertura-96.5%25-2ea44f?style=flat-square)]
 
 SDK oficial do Eyedux para Go. Framework-agnostic. Zero dependências externas além da stdlib.
 

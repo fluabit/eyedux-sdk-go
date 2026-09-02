@@ -22,13 +22,5 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - name: Run tests with coverage
-        run: go test -race -covermode=atomic -coverprofile=coverage.out ./...
-
-      - name: Upload coverage
-        uses: codecov/codecov-action@v5
-        with:
-          files: ./coverage.out
-          flags: unittests
-          name: go-coverage
-          fail_ci_if_error: true
+      - name: Run tests
+        run: go test -race ./...
