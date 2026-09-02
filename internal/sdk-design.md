@@ -34,6 +34,7 @@ eyedux-sdk-go/
 ├── eyedux.go          # Client, New, opções de configuração
 ├── event.go           # Tipos Event, CreateEventInput, ListEventsInput
 ├── errors.go          # Tipos de erro, APIError, códigos de erro como constantes
+├── diagnostics.go     # Diagnóstico de erros e captura da origem
 ├── http.go            # Lógica de transporte HTTP (interno — não exportado)
 ├── eyedux_test.go     # Testes do cliente
 └── docs/
@@ -160,6 +161,37 @@ func (c *Client) FindEventByExternalID(ctx context.Context, externalID string) (
 - Faz `GET /public/logs/external/<externalID>`.
 - `externalID` vazio deve ser validado antes da chamada HTTP — retornar `ErrExternalIDRequired`.
 - Em `404`, retornar `nil, <APIError com código event_external_id_not_found>`.
+
+### EmitError
+
+```go
+func (c *Client) EmitError(ctx context.Context, input EmitInput) (*Event, error)
+```
+
+- Enriquece `input.Properties` com `Err`, `Operation` e a origem do caller.
+- Usa `SourceSkip` para wrappers que precisam ignorar callers adicionais.
+- Delega a criação para `CreateEvent`, preservando projeto padrão, metadados e
+    demais regras do cliente.
+- Não altera o mapa recebido e não converte a falha da operação original em
+    sucesso.
+
+`EmitInput` concentra os campos comuns de emissão e também mantém
+`ProjectID` para integrações multi-projeto. Helpers puros relacionados:
+
+```go
+func CurrentErrorSource() ErrorSource
+func ErrorProperties(properties map[string]any, err error, operation string) map[string]any
+```
+
+`ErrorProperties` copia o mapa recebido. O caminho registrado por
+`CurrentErrorSource` contém apenas o nome base do arquivo.
+
+### Emissão por categoria
+
+O client oferece `Emit` e os atalhos `EmitWarning`, `EmitLog`, `EmitDebug`,
+`EmitInfo` e `EmitMetric`. Eles recebem `EmitInput`, definem a categoria
+predefinida e delegam para `CreateEvent`. A política de idempotência para
+`409` permanece no consumidor, pois depende da regra de negócio da aplicação.
 
 ---
 

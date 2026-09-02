@@ -113,6 +113,68 @@ valor. Os valores precisam ser serializáveis como JSON. `Type` é obrigatório;
 `TypeGroup`, `EyeduxType`, `Metadata` e os objetos de referência são
 opcionais.
 
+## Emitindo erros com diagnóstico
+
+Use `EmitError` quando uma falha da aplicação também precisar ser registrada
+como evento. O SDK adiciona `error`, `operation`, `source_file`, `source_line`
+e `source_function` às propriedades, sem alterar o mapa original:
+
+```go
+func CreateOrder(ctx context.Context, client *eyeduxsdk.Client, orderID string) error {
+	if err := saveOrder(ctx, orderID); err != nil {
+		_, emitErr := client.EmitError(ctx, eyeduxsdk.EmitInput{
+			Type:      "order.error",
+			Err:       err,
+			Operation: "save order",
+			Properties: map[string]any{
+				"order_id": orderID,
+			},
+		})
+		if emitErr != nil {
+			log.Printf("não foi possível registrar erro no Eyedux: %v", emitErr)
+		}
+		return err
+	}
+	return nil
+}
+```
+
+`EmitError` não substitui nem ignora o erro original. A falha da operação
+continua sendo retornada pelo client da aplicação, enquanto a falha de
+telemetria pode ser observada separadamente.
+
+Quando a aplicação já possui um fluxo próprio para criar eventos, use o
+helper puro `ErrorProperties`:
+
+```go
+properties := eyeduxsdk.ErrorProperties(existingProperties, err, "save order")
+_, emitErr := client.CreateEvent(ctx, eyeduxsdk.CreateEventInput{
+	Type:       "order.error",
+	Properties: properties,
+})
+```
+
+`CurrentErrorSource` também pode ser usado isoladamente. O caminho do arquivo
+é reduzido ao nome base para evitar expor diretórios locais no evento.
+
+Se a chamada passar por um wrapper adicional, preencha `SourceSkip` em
+`EmitInput` com o número de callers da aplicação que devem ser ignorados ao
+localizar a origem.
+
+Para eventos que não são erros, use os atalhos por categoria do SDK e mantenha
+o mesmo `EmitInput`:
+
+```go
+	_, err := client.EmitWarning(ctx, eyeduxsdk.EmitInput{
+	Type:       "billing.warning",
+	Properties: map[string]any{"invoice_id": invoiceID},
+})
+```
+
+Também estão disponíveis `EmitLog`, `EmitDebug`, `EmitInfo` e `EmitMetric`.
+Esses métodos retornam o `*Event` criado e o erro da API, assim como
+`CreateEvent`.
+
 ## Contexto e timeout
 
 Passe o contexto recebido pela aplicação para cada chamada. Em handlers HTTP,

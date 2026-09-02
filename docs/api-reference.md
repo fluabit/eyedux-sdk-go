@@ -13,7 +13,8 @@
   - [GET /public/logs — Listar eventos](#get-publiclogs-listar-eventos)
   - [GET /public/logs/external/:external_id — Buscar por ID externo](#get-publiclogsexternalexternal_id-buscar-por-id-externo)
 6. [Modelos de dados](#modelos-de-dados)
-7. [Códigos de erro](#codigos-de-erro)
+7. [Diagnóstico de erros](#diagnóstico-de-erros)
+8. [Códigos de erro](#codigos-de-erro)
 
 ---
 
@@ -402,6 +403,87 @@ autocomplete:
 enviado. `Event.EyeduxType` é `nil` quando a API retorna `null`.
 
 ---
+
+## Diagnóstico de erros
+
+### `Client.EmitError`
+
+```go
+func (c *Client) EmitError(
+  ctx context.Context,
+  input eyeduxsdk.EmitInput,
+) (*eyeduxsdk.Event, error)
+```
+
+Cria um evento usando `input` e enriquece `input.Properties` com:
+
+- `error`, quando `input.Err` não é `nil`;
+- `operation`, quando `input.Operation` é informado;
+- `source_file`, `source_line` e `source_function`, identificando o ponto que
+  chamou `EmitError`.
+
+O método copia o mapa de propriedades e não altera o input do consumidor. A
+falha de envio é retornada separadamente; o erro original continua sob
+responsabilidade do client da aplicação.
+
+### Helpers de diagnóstico
+
+```go
+func eyeduxsdk.CurrentErrorSource() eyeduxsdk.ErrorSource
+func eyeduxsdk.ErrorProperties(
+  properties map[string]any,
+  err error,
+  operation string,
+) map[string]any
+func eyeduxsdk.ErrorPropertiesWithSourceSkip(
+  properties map[string]any,
+  err error,
+  operation string,
+  sourceSkip int,
+) map[string]any
+```
+
+`CurrentErrorSource` captura arquivo, função e linha do primeiro caller fora
+dos helpers do SDK. `ErrorProperties` é útil quando o client precisa manter um
+fluxo próprio de criação de eventos. Use `ErrorPropertiesWithSourceSkip` quando
+esse fluxo tiver wrappers adicionais; cada unidade de `sourceSkip` pula um
+caller da aplicação.
+
+`EmitInput` reúne os dados do evento e os campos de diagnóstico:
+
+```go
+type EmitInput struct {
+  ProjectID         string
+  Type              string
+  TypeGroup         string
+  EyeduxType        EventEyeduxType
+  Properties        map[string]any
+  Err               error
+  Operation         string
+  SourceSkip        int
+  ExternalObject    *EventObject
+  CorrelationObject *EventObject
+  Metadata          map[string]any
+}
+```
+
+### Emissão por categoria
+
+Para evitar repetir `CreateEventInput.EyeduxType`, o client também oferece
+atalhos para as categorias predefinidas:
+
+```go
+func (c *Client) Emit(ctx context.Context, input EmitInput) (*Event, error)
+func (c *Client) EmitWarning(ctx context.Context, input EmitInput) (*Event, error)
+func (c *Client) EmitLog(ctx context.Context, input EmitInput) (*Event, error)
+func (c *Client) EmitDebug(ctx context.Context, input EmitInput) (*Event, error)
+func (c *Client) EmitInfo(ctx context.Context, input EmitInput) (*Event, error)
+func (c *Client) EmitMetric(ctx context.Context, input EmitInput) (*Event, error)
+```
+
+`Emit` usa `input.EyeduxType`. Os atalhos substituem esse campo e aplicam,
+respectivamente, `system-warning`,
+`system-log`, `system-debug`, `system-info` e `system-metric`.
 
 ## Códigos de erro
 

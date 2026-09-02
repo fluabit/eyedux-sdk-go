@@ -142,6 +142,32 @@ Available values are `EventEyeduxTypeSystemError`,
 `EventEyeduxTypeSystemDebug`, `EventEyeduxTypeSystemInfo` and
 `EventEyeduxTypeSystemMetric`.
 
+### Diagnóstico de erros
+
+Use `EmitError` para registrar uma falha com propriedades padronizadas sem
+implementar a captura da origem no client:
+
+```go
+    _, emitErr := client.EmitError(ctx, eyeduxsdk.EmitInput{
+        Type:      "order.error",
+        Err:       err,
+        Operation: "save order",
+        Properties: map[string]any{
+            "order_id": orderID,
+        },
+})
+```
+
+O SDK adiciona `error`, `operation`, `source_file`, `source_line` e
+`source_function`, sem alterar o mapa original. A falha de telemetria é
+retornada em `emitErr` e não substitui o erro original da operação. Para um
+fluxo próprio, use `eyeduxsdk.ErrorProperties` diretamente.
+
+Para as demais categorias predefinidas, use `EmitWarning`, `EmitLog`,
+`EmitDebug`, `EmitInfo` ou `EmitMetric` com o mesmo `EmitInput`.
+Wrappers que adicionam uma camada própria devem usar `EmitInput.SourceSkip`
+para ajustar a origem registrada.
+
 ---
 
 ### `client.ListEvents`

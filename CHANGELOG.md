@@ -7,10 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-09-02
+
+### Breaking Changes
+
+- `Client.Emit` now receives a single `EmitInput` argument instead of an
+  `EventEyeduxType` and a `CreateEventInput`.
+- `Client.EmitWarning`, `Client.EmitLog`, `Client.EmitDebug`, `Client.EmitInfo`
+  and `Client.EmitMetric` now receive `EmitInput` instead of
+  `CreateEventInput`.
+- `Client.EmitError` now receives `EmitInput`; `Err`, `Operation` and
+  `SourceSkip` are configured as fields of that input.
+- `Client.EmitErrorWithSourceSkip` was removed. Set `EmitInput.SourceSkip`
+  when a wrapper adds application frames to the call stack.
+
 ### Added
 
+- `EmitInput` for shared event and error-diagnostic fields.
+- `Client.Emit`, `Client.EmitError`, and category-specific helpers for
+  warning, log, debug, info, metric and error events.
+- `ErrorProperties`, `ErrorPropertiesWithSourceSkip`, and
+  `CurrentErrorSource` for standardized error-event diagnostics.
 - Material for MkDocs for the public documentation site.
 - GitHub Actions build step for generating and publishing the documentation.
+
+### Migration
+
+```go
+// Antes
+_, err := client.EmitError(ctx, err, "save order", eyeduxsdk.CreateEventInput{
+	Type: "order.error",
+})
+
+// Depois
+_, err := client.EmitError(ctx, eyeduxsdk.EmitInput{
+	Type:      "order.error",
+	Err:       err,
+	Operation: "save order",
+})
+```
+
+`CreateEvent` permanece disponível para integrações que precisam da API de
+baixo nível. A política de idempotência para conflitos `409` continua sendo
+decidida pelo consumidor.
 
 ## [0.4.0] - 2026-09-02
 
@@ -80,7 +119,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Structured API error handling (`APIError`, `IsConflict`, `IsNotFound`, `IsAuthError`).
 - `ErrEmptyAPIKey`, `ErrEmptyExternalID` sentinel errors.
 
-[Unreleased]: https://github.com/fluabit/eyedux-sdk-go/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/fluabit/eyedux-sdk-go/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/fluabit/eyedux-sdk-go/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/fluabit/eyedux-sdk-go/compare/v0.3.3...v0.4.0
 [0.3.3]: https://github.com/fluabit/eyedux-sdk-go/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/fluabit/eyedux-sdk-go/compare/v0.3.1...v0.3.2
