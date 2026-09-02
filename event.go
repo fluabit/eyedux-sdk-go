@@ -12,6 +12,8 @@ type EventObject struct {
 // Event represents an event returned by the Eyedux API.
 type Event struct {
 	ID                string         `json:"id"`
+	Environment       string         `json:"environment"`
+	EyeduxType        *string        `json:"eyedux_type"`
 	Type              string         `json:"type"`
 	TypeGroup         string         `json:"type_group"`
 	Properties        map[string]any `json:"properties"`
@@ -28,6 +30,7 @@ type CreateEventInput struct {
 	ProjectID         string
 	Type              string
 	TypeGroup         string
+	EyeduxType        *string
 	Properties        map[string]any
 	ExternalObject    *EventObject
 	CorrelationObject *EventObject

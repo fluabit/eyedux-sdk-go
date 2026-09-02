@@ -141,9 +141,11 @@ Content-Type: application/json
 |-------|------|-------------|-------|
 | `project_id` | `string` | Sim | ObjectID hexadecimal (24 chars) |
 | `type` | `string` | Sim | Categoria do evento; não pode ser vazio |
+| `type_group` | `string` | Não | Grupo da categoria do evento |
+| `eyedux_type` | `string` | Não | Tipo predefinido do Eyedux |
 | `properties` | `object` | Sim | Payload livre; não pode ser vazio (`{}` é rejeitado) |
-| `external_id` | `string` | Não | ID único externo; rejeitado se duplicado globalmente |
-| `correlation_id` | `string` | Não | Agrupa eventos relacionados; sem unicidade forçada |
+| `external_object` | `object` | Não | Referência externa (`id`, `property` e `source`) |
+| `correlation_object` | `object` | Não | Referência correlacionada (`id`, `property` e `source`) |
 | `metadata` | `object` | Não | Dados de contexto livres (IP, user agent, etc.) |
 
 **Exemplo de body**
@@ -152,12 +154,20 @@ Content-Type: application/json
 {
   "project_id": "64f1a2b3c4d5e6f7a8b9c0d1",
   "type": "user.signup",
+  "type_group": "identity",
+  "eyedux_type": "system-log",
   "properties": {
     "plan": "pro",
     "source": "landing_page"
   },
-  "external_id": "evt_01HX92K",
-  "correlation_id": "session_abc123",
+  "external_object": {
+    "id": "evt_01HX92K",
+    "property": "orderId"
+  },
+  "correlation_object": {
+    "id": "session_abc123",
+    "property": "sessionId"
+  },
   "metadata": {
     "ip": "192.168.1.1",
     "user_agent": "Mozilla/5.0"
@@ -175,13 +185,16 @@ HTTP 201 Created
 {
   "data": {
     "id": "64f1a2b3c4d5e6f7a8b9c0d1",
+    "environment": "production",
+    "eyedux_type": "system-log",
     "type": "user.signup",
+    "type_group": "identity",
     "properties": { "plan": "pro", "source": "landing_page" },
     "status": "active",
     "timestamp": "2026-08-13T10:00:00Z",
     "created_at": "2026-08-13T10:00:01Z",
-    "external_id": "evt_01HX92K",
-    "correlation_id": "session_abc123",
+    "external_object": { "id": "evt_01HX92K", "property": "orderId" },
+    "correlation_object": { "id": "session_abc123", "property": "sessionId" },
     "metadata": { "ip": "192.168.1.1", "user_agent": "Mozilla/5.0" }
   }
 }
@@ -190,13 +203,16 @@ HTTP 201 Created
 | Campo | Tipo | Presença |
 |-------|------|----------|
 | `id` | `string` | Sempre |
+| `environment` | `string` | Sempre; ambiente da API key |
+| `eyedux_type` | `string` ou `null` | Sempre |
 | `type` | `string` | Sempre |
+| `type_group` | `string` | Sempre |
 | `properties` | `object` | Sempre |
 | `status` | `string` | Sempre (`active` na criação) |
 | `timestamp` | `string` (RFC3339) | Sempre |
 | `created_at` | `string` (RFC3339) | Sempre |
-| `external_id` | `string` ou `null` | Sempre |
-| `correlation_id` | `string` ou `null` | Sempre |
+| `external_object` | `object` ou `null` | Sempre |
+| `correlation_object` | `object` ou `null` | Sempre |
 | `metadata` | `object` ou `null` | Sempre |
 
 #### Respostas de erro
@@ -204,7 +220,7 @@ HTTP 201 Created
 | Status | Cenário | Código |
 |--------|---------|--------|
 | `400` | JSON inválido, `project_id` ausente ou formato inválido, `type` ou `properties` ausentes | — |
-| `409` | `external_id` já utilizado por outro evento | `event_external_id_conflict` |
+| `409` | `external_object` já utilizado por outro evento | `event_external_object_conflict` |
 | `422` | API key inválida/revogada; `type` enviado mas vazio; `properties` enviado mas vazio | `invalid_api_key` / `event_type_required` / `event_properties_empty` |
 | `429` | Rate limit excedido | `RATE_LIMIT_EXCEEDED` |
 | `500` | Falha interna do servidor | `INTERNAL_SERVER_ERROR` |
@@ -247,8 +263,8 @@ HTTP 200 OK
       "status": "active",
       "timestamp": "2026-08-13T10:00:00Z",
       "created_at": "2026-08-13T10:00:01Z",
-      "external_id": null,
-      "correlation_id": null,
+      "external_object": null,
+      "correlation_object": null,
       "metadata": null
     }
   ]
@@ -285,7 +301,7 @@ Authorization: Bearer <api_key>
 
 | Parâmetro | Tipo | Obrigatório | Regra |
 |-----------|------|-------------|-------|
-| `external_id` | `string` | Sim | Exatamente como enviado na criação; não pode ser vazio |
+| `external_id` | `string` | Sim | ID dentro de `external_object`; não pode ser vazio |
 
 #### Resposta de sucesso
 
@@ -309,7 +325,7 @@ HTTP 200 OK
 }
 ```
 
-A busca é **global** — não filtra por organização ou projeto. O `external_id` deve ser suficientemente único na integração do cliente.
+A busca é **global** — não filtra por organização ou projeto. O ID externo deve ser suficientemente único na integração do cliente.
 
 #### Respostas de erro
 
@@ -337,8 +353,11 @@ Representa um evento retornado pela API. Campos opcionais são sempre presentes 
 | `status` | `string` | `"active"` ou `"deleted"` |
 | `timestamp` | `time.Time` | RFC3339 |
 | `created_at` | `time.Time` | RFC3339 |
-| `external_id` | `*string` | `null` quando não definido |
-| `correlation_id` | `*string` | `null` quando não definido |
+| `environment` | `string` | Ambiente da API key |
+| `eyedux_type` | `*string` | `null` quando não definido |
+| `type_group` | `string` | Vazio quando não definido |
+| `external_object` | `*EventObject` | `null` quando não definido |
+| `correlation_object` | `*EventObject` | `null` quando não definido |
 | `metadata` | `map[string]any` | `null` quando não definido |
 
 ### CreateEventInput
@@ -350,8 +369,10 @@ Entrada para criação de evento.
 | `ProjectID` | `string` | Sim |
 | `Type` | `string` | Sim |
 | `Properties` | `map[string]any` | Sim |
-| `ExternalID` | `*string` | Não |
-| `CorrelationID` | `*string` | Não |
+| `TypeGroup` | `string` | Não |
+| `EyeduxType` | `*string` | Não |
+| `ExternalObject` | `*EventObject` | Não |
+| `CorrelationObject` | `*EventObject` | Não |
 | `Metadata` | `map[string]any` | Não |
 
 ### ListEventsInput
@@ -374,7 +395,7 @@ Tabela consolidada de todos os códigos de erro conhecidos da Public API.
 | `invalid_api_key` | `422` | API key inválida ou revogada |
 | `event_type_required` | `422` | Campo `type` enviado mas vazio |
 | `event_properties_empty` | `422` | Campo `properties` enviado mas vazio |
-| `event_external_id_conflict` | `409` | `external_id` duplicado |
+| `event_external_object_conflict` | `409` | `external_object` duplicado |
 | `event_external_id_not_found` | `404` | Nenhum evento com o `external_id` informado |
 | `event_external_id_required` | `422` | `external_id` vazio no path param |
 | `RATE_LIMIT_EXCEEDED` | `429` | Rate limit excedido |

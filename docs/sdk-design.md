@@ -139,15 +139,18 @@ func (c *Client) FindEventByExternalID(ctx context.Context, externalID string) (
 
 ```go
 type Event struct {
-    ID            string         `json:"id"`
-    Type          string         `json:"type"`
-    Properties    map[string]any `json:"properties"`
-    Status        string         `json:"status"`
-    Timestamp     time.Time      `json:"timestamp"`
-    CreatedAt     time.Time      `json:"created_at"`
-    ExternalID    *string        `json:"external_id"`
-    CorrelationID *string        `json:"correlation_id"`
-    Metadata      map[string]any `json:"metadata"`
+    ID                string         `json:"id"`
+    Environment       string         `json:"environment"`
+    EyeduxType        *string        `json:"eyedux_type"`
+    Type              string         `json:"type"`
+    TypeGroup         string         `json:"type_group"`
+    Properties        map[string]any `json:"properties"`
+    Status            string         `json:"status"`
+    Timestamp         time.Time      `json:"timestamp"`
+    CreatedAt         time.Time      `json:"created_at"`
+    ExternalObject    *EventObject   `json:"external_object"`
+    CorrelationObject *EventObject   `json:"correlation_object"`
+    Metadata          map[string]any `json:"metadata"`
 }
 ```
 
@@ -155,12 +158,14 @@ type Event struct {
 
 ```go
 type CreateEventInput struct {
-    ProjectID     string
-    Type          string
-    Properties    map[string]any
-    ExternalID    *string
-    CorrelationID *string
-    Metadata      map[string]any
+    ProjectID         string
+    Type              string
+    TypeGroup         string
+    EyeduxType        *string
+    Properties        map[string]any
+    ExternalObject    *EventObject
+    CorrelationObject *EventObject
+    Metadata          map[string]any
 }
 ```
 
@@ -201,7 +206,7 @@ const (
     ErrCodeInvalidAPIKey             = "invalid_api_key"
     ErrCodeEventTypeRequired         = "event_type_required"
     ErrCodeEventPropertiesEmpty      = "event_properties_empty"
-    ErrCodeEventExternalIDConflict   = "event_external_id_conflict"
+    ErrCodeEventExternalObjectConflict = "event_external_object_conflict"
     ErrCodeEventExternalIDNotFound   = "event_external_id_not_found"
     ErrCodeEventExternalIDRequired   = "event_external_id_required"
     ErrCodeRateLimitExceeded         = "RATE_LIMIT_EXCEEDED"

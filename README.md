@@ -29,9 +29,11 @@ func main() {
         log.Fatal(err)
     }
 
+    eyeduxType := "system-log"
     event, err := client.CreateEvent(context.Background(), eyedux.CreateEventInput{
         ProjectID:  "64f1a2b3c4d5e6f7a8b9c0d1",
         Type:       "user.signup",
+        EyeduxType: &eyeduxType,
         Properties: map[string]any{"plan": "pro", "source": "landing_page"},
     })
     if err != nil {
@@ -82,12 +84,18 @@ extID := "evt_01HX92K"
 corrID := "session_abc123"
 
 event, err := client.CreateEvent(ctx, eyedux.CreateEventInput{
-    ProjectID:     "64f1a2b3c4d5e6f7a8b9c0d1",
-    Type:          "user.signup",
-    Properties:    map[string]any{"plan": "pro"},
-    ExternalID:    &extID,   // opcional — ID idempotente externo
-    CorrelationID: &corrID,  // opcional — agrupa eventos relacionados
-    Metadata:      map[string]any{"ip": "192.168.1.1"},
+    ProjectID: "64f1a2b3c4d5e6f7a8b9c0d1",
+    Type:      "user.signup",
+    Properties: map[string]any{"plan": "pro"},
+    ExternalObject: &eyedux.EventObject{
+        ID:       extID,
+        Property: "orderId",
+    },
+    CorrelationObject: &eyedux.EventObject{
+        ID:       corrID,
+        Property: "sessionId",
+    },
+    Metadata: map[string]any{"ip": "192.168.1.1"},
 })
 ```
 
@@ -123,7 +131,7 @@ events, err := client.ListEvents(ctx, eyedux.ListEventsInput{
 event, err := client.FindEventByExternalID(ctx context.Context, externalID string) (*eyedux.Event, error)
 ```
 
-Busca um único evento pelo `external_id` definido na criação. Retorna `ErrEmptyExternalID` se `externalID` for vazio.
+Busca um único evento pelo ID definido no `ExternalObject`. Retorna `ErrEmptyExternalID` se `externalID` for vazio.
 
 ```go
 event, err := client.FindEventByExternalID(ctx, "evt_01HX92K")
@@ -181,13 +189,16 @@ O SDK não implementa retry automático — a política de retry fica a cargo do
 | Campo | Tipo | Presença |
 |-------|------|----------|
 | `ID` | `string` | Sempre |
+| `Environment` | `string` | Ambiente da API key |
+| `EyeduxType` | `*string` | `nil` quando não definido |
 | `Type` | `string` | Sempre |
+| `TypeGroup` | `string` | Vazio quando não definido |
 | `Properties` | `map[string]any` | Sempre |
 | `Status` | `string` | Sempre (`"active"` ou `"deleted"`) |
 | `Timestamp` | `time.Time` | Sempre |
 | `CreatedAt` | `time.Time` | Sempre |
-| `ExternalID` | `*string` | `nil` quando não definido |
-| `CorrelationID` | `*string` | `nil` quando não definido |
+| `ExternalObject` | `*EventObject` | `nil` quando não definido |
+| `CorrelationObject` | `*EventObject` | `nil` quando não definido |
 | `Metadata` | `map[string]any` | `nil` quando não definido |
 
 ---

@@ -55,6 +55,8 @@ func TestNew_validAPIKey(t *testing.T) {
 // ---- CreateEvent ----
 
 func TestCreateEvent_success(t *testing.T) {
+	eyeduxType := "system-log"
+
 	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			t.Errorf("method = %s, want POST", r.Method)
@@ -68,14 +70,25 @@ func TestCreateEvent_success(t *testing.T) {
 		if got := r.Header.Get("Content-Type"); got != "application/json" {
 			t.Errorf("Content-Type = %q, want application/json", got)
 		}
+		var requestBody struct {
+			EyeduxType *string `json:"eyedux_type"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
+			t.Fatalf("decode request body: %v", err)
+		}
+		if requestBody.EyeduxType == nil || *requestBody.EyeduxType != eyeduxType {
+			t.Errorf("eyedux_type = %v, want %q", requestBody.EyeduxType, eyeduxType)
+		}
 		writeJSON(w, http.StatusCreated, map[string]any{
 			"data": map[string]any{
-				"id":         "abc123",
-				"type":       "user.signup",
-				"properties": map[string]any{"plan": "pro"},
-				"status":     "active",
-				"timestamp":  "2026-08-13T10:00:00Z",
-				"created_at": "2026-08-13T10:00:01Z",
+				"id":          "abc123",
+				"environment": "production",
+				"eyedux_type": "system-log",
+				"type":        "user.signup",
+				"properties":  map[string]any{"plan": "pro"},
+				"status":      "active",
+				"timestamp":   "2026-08-13T10:00:00Z",
+				"created_at":  "2026-08-13T10:00:01Z",
 			},
 		})
 	})
@@ -83,6 +96,7 @@ func TestCreateEvent_success(t *testing.T) {
 	event, err := c.CreateEvent(context.Background(), CreateEventInput{
 		ProjectID:  "64f1a2b3c4d5e6f7a8b9c0d1",
 		Type:       "user.signup",
+		EyeduxType: &eyeduxType,
 		Properties: map[string]any{"plan": "pro"},
 	})
 	if err != nil {
@@ -93,6 +107,12 @@ func TestCreateEvent_success(t *testing.T) {
 	}
 	if event.Type != "user.signup" {
 		t.Errorf("Type = %s, want user.signup", event.Type)
+	}
+	if event.Environment != "production" {
+		t.Errorf("Environment = %s, want production", event.Environment)
+	}
+	if event.EyeduxType == nil || *event.EyeduxType != eyeduxType {
+		t.Errorf("EyeduxType = %v, want %q", event.EyeduxType, eyeduxType)
 	}
 	if event.Status != "active" {
 		t.Errorf("Status = %s, want active", event.Status)

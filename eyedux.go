@@ -67,6 +67,7 @@ type createEventBody struct {
 	ProjectID         string         `json:"project_id"`
 	Type              string         `json:"type"`
 	TypeGroup         string         `json:"type_group,omitempty"`
+	EyeduxType        *string        `json:"eyedux_type,omitempty"`
 	Properties        map[string]any `json:"properties"`
 	ExternalObject    *EventObject   `json:"external_object,omitempty"`
 	CorrelationObject *EventObject   `json:"correlation_object,omitempty"`
@@ -75,15 +76,7 @@ type createEventBody struct {
 
 // CreateEvent ingests a new event into the authenticated organization.
 func (c *Client) CreateEvent(ctx context.Context, input CreateEventInput) (*Event, error) {
-	body := createEventBody{
-		ProjectID:         input.ProjectID,
-		Type:              input.Type,
-		TypeGroup:         input.TypeGroup,
-		Properties:        input.Properties,
-		ExternalObject:    input.ExternalObject,
-		CorrelationObject: input.CorrelationObject,
-		Metadata:          input.Metadata,
-	}
+	body := createEventBody(input)
 
 	var env successEnvelope[*Event]
 	if err := c.do(ctx, http.MethodPost, "/public/logs", body, &env); err != nil {
