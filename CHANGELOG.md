@@ -11,15 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Breaking Changes
 
-- `Client.Emit` now receives a single `EmitInput` argument instead of an
-  `EventEyeduxType` and a `CreateEventInput`.
-- `Client.EmitWarning`, `Client.EmitLog`, `Client.EmitDebug`, `Client.EmitInfo`
-  and `Client.EmitMetric` now receive `EmitInput` instead of
-  `CreateEventInput`.
+- The convenience API is consolidated around `EmitInput`. This is a breaking
+  change for consumers of the pre-release convenience API; the stable
+  `New`, `CreateEvent` and other `v0.4.0` APIs remain compatible.
 - `Client.EmitError` now receives `EmitInput`; `Err`, `Operation` and
   `SourceSkip` are configured as fields of that input.
-- `Client.EmitErrorWithSourceSkip` was removed. Set `EmitInput.SourceSkip`
-  when a wrapper adds application frames to the call stack.
 
 ### Added
 
@@ -28,28 +24,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   warning, log, debug, info, metric and error events.
 - `ErrorProperties`, `ErrorPropertiesWithSourceSkip`, and
   `CurrentErrorSource` for standardized error-event diagnostics.
-- Material for MkDocs for the public documentation site.
-- GitHub Actions build step for generating and publishing the documentation.
+- Public integration and API reference documentation built with Material for
+  MkDocs and published through GitHub Pages.
+- Local Eyedux logo asset and branded documentation homepage.
+
+### Changed
+
+- Internal architecture and integration proposal documents moved to
+  `internal/`; `docs/` now contains only public documentation.
+- Documentation deployment now uses a versioned GitHub Actions workflow with
+  a strict MkDocs build before publishing the generated `site/` artifact.
 
 ### Migration
 
 ```go
-// Antes
-_, err := client.EmitError(ctx, err, "save order", eyeduxsdk.CreateEventInput{
+// Antes: API de conveniência pré-release
+_, emitErr := client.EmitError(ctx, operationErr, "save order", eyeduxsdk.CreateEventInput{
 	Type: "order.error",
 })
 
 // Depois
-_, err := client.EmitError(ctx, eyeduxsdk.EmitInput{
+_, emitErr = client.EmitError(ctx, eyeduxsdk.EmitInput{
 	Type:      "order.error",
-	Err:       err,
+	Err:       operationErr,
 	Operation: "save order",
 })
 ```
 
 `CreateEvent` permanece disponível para integrações que precisam da API de
 baixo nível. A política de idempotência para conflitos `409` continua sendo
-decidida pelo consumidor.
+decidida pelo consumidor. Consumidores que usam apenas a API estável de
+`v0.4.0` não precisam alterar suas chamadas existentes.
 
 ## [0.4.0] - 2026-09-02
 
