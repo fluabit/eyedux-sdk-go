@@ -36,6 +36,14 @@ jobs:
       - name: Build documentation
         run: mkdocs build --strict
 
+      - name: Verify documentation output
+        run: |
+          test -s site/index.html
+          test -s site/client-integration/index.html
+          test -s site/api-reference/index.html
+          grep -q 'mkdocs-material' site/index.html
+          ! grep -q '!!! warning' site/index.html
+
       - name: Upload documentation artifact
         uses: actions/upload-pages-artifact@v5
         with:

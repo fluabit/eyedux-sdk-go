@@ -394,7 +394,8 @@ ele não executa o SDK, não guarda a API key com segurança e não deve receber
 eventos diretamente do navegador.
 
 Este repositório já contém o workflow
-`.github/workflows/pages.yml`, que publica a pasta `docs/`:
+`.github/workflows/pages.yml`, que instala o Material for MkDocs, transforma a
+pasta `docs/` em HTML e publica o artefato gerado em `site/`:
 
 1. Faça push do repositório para o GitHub.
 2. Abra `Settings > Pages` no repositório.
@@ -403,6 +404,10 @@ Este repositório já contém o workflow
 	push na branch `main`.
 5. Aguarde o job de deploy terminar e abra a URL informada pelo ambiente
 	`github-pages`.
+
+Se a fonte estiver como **Deploy from a branch**, o GitHub Pages usará Jekyll e
+exibirá a sintaxe do Material sem o tema. Nesse caso, volte ao passo 3 e
+selecione **GitHub Actions**.
 
 O arquivo `docs/index.md` funciona como a página inicial e aponta para este
 guia e a referência da API. Não é necessário adicionar um backend para
