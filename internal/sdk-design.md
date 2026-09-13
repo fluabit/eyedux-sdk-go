@@ -250,6 +250,16 @@ const (
 enviado. `Event.EyeduxType` permanece ponteiro para distinguir `null` de um
 valor preenchido.
 
+Para `audit`, `EmitInput.AuditProperties` oferece um modelo tipado para ator,
+alvo, resultado, motivo e alterações. `EmitAudit` valida esse modelo e o
+converte para `Properties`; o campo `Properties` continua disponível para
+integrações que precisam montar o payload manualmente. Os tipos convencionais
+de ator incluem `user`, `service`, `system`, `admin` e `anonymous`, mas valores
+customizados não vazios também são aceitos. Os resultados aceitos incluem
+`success`, `failure`, `in_review` e `denied`; `changes` deve ser informado para
+ações concluídas com sucesso que alterem estado. `StateChanging` é um campo
+somente do SDK (`json:"-"`) que ativa essa validação sem alterar o payload.
+
 ### ListEventsInput
 
 ```go

@@ -145,6 +145,42 @@ Available values are `EventEyeduxTypeSystemError`,
 `EventEyeduxTypeSystemDebug`, `EventEyeduxTypeSystemInfo` and
 `EventEyeduxTypeAudit`.
 
+### Modelo de auditoria
+
+Para eventos `audit`, o SDK oferece modelos tipados para a estrutura de
+`properties` e valida os campos obrigatórios antes do envio:
+
+```go
+event, err := client.EmitAudit(ctx, eyeduxsdk.EmitInput{
+    Type: "user.password_changed",
+    AuditProperties: &eyeduxsdk.AuditProperties{
+        Actor: eyeduxsdk.AuditActor{
+            Type: eyeduxsdk.AuditActorTypeService,
+            ID:   "account-service",
+        },
+        Target: eyeduxsdk.AuditTarget{
+            Type: "user",
+            ID:   "user_123",
+        },
+        Result: eyeduxsdk.AuditResultSuccess,
+        StateChanging: true,
+        Changes: map[string]any{
+            "fields": []string{"password"},
+        },
+    },
+})
+```
+
+`AuditActorTypeUser`, `AuditActorTypeService`, `AuditActorTypeSystem`,
+`AuditActorTypeAdmin` e `AuditActorTypeAnonymous` são valores convencionais;
+tipos customizados não vazios também são aceitos. `AuditActorTypeAnonymous`
+dispensa o ID. `AuditResultInReview` representa uma ação sob análise ou ainda
+aguardando conclusão. `Reason` é obrigatório para `AuditResultFailure` e
+`AuditResultDenied`. `Changes` aceita um objeto livre e deve ser informado
+quando uma ação concluída com sucesso alterar estado. Nesse caso, defina
+`StateChanging: true`; esse campo serve apenas para a validação local e não é
+enviado no JSON. O contrato não fixa o formato das alterações.
+
 ### Diagnóstico de erros
 
 Use `EmitError` para registrar uma falha com propriedades padronizadas sem

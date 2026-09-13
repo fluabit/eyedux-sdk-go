@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-09-13
+
+### Added
+
+- Added typed `AuditProperties`, actor and result models for structured audit
+  event properties, with local validation through `EmitAudit`. The model now
+  supports custom actor types, the `in_review` result, and local validation of
+  required `changes` for successful state-changing actions.
+
 ## [0.6.0] - 2026-09-13
 
 ### Breaking Changes
@@ -134,7 +143,9 @@ decidida pelo consumidor. Consumidores que usam apenas a API estável de
 - Structured API error handling (`APIError`, `IsConflict`, `IsNotFound`, `IsAuthError`).
 - `ErrEmptyAPIKey`, `ErrEmptyExternalID` sentinel errors.
 
-[Unreleased]: https://github.com/fluabit/eyedux-sdk-go/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/fluabit/eyedux-sdk-go/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/fluabit/eyedux-sdk-go/compare/v0.6.0...v0.7.0
+[0.6.0]: https://github.com/fluabit/eyedux-sdk-go/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/fluabit/eyedux-sdk-go/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/fluabit/eyedux-sdk-go/compare/v0.3.3...v0.4.0
 [0.3.3]: https://github.com/fluabit/eyedux-sdk-go/compare/v0.3.2...v0.3.3

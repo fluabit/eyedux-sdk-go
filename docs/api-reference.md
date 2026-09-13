@@ -402,6 +402,60 @@ autocomplete:
 `CreateEventInput.EyeduxType` usa o valor vazio quando o campo não deve ser
 enviado. `Event.EyeduxType` é `nil` quando a API retorna `null`.
 
+### AuditProperties
+
+Modelo tipado para `properties` de eventos `audit`:
+
+```go
+type AuditProperties struct {
+  Actor         AuditActor
+  Target        AuditTarget
+  Result        AuditResult
+  Reason        string
+  Changes       map[string]any
+  StateChanging bool
+}
+
+type AuditActor struct {
+  Type AuditActorType
+  ID   string
+}
+
+type AuditTarget struct {
+  Type string
+  ID   string
+}
+```
+
+Os valores convencionais de ator são `AuditActorTypeUser`,
+`AuditActorTypeService`, `AuditActorTypeSystem`, `AuditActorTypeAdmin` e
+`AuditActorTypeAnonymous`; tipos customizados não vazios também são aceitos.
+Os resultados disponíveis são `AuditResultSuccess`, `AuditResultFailure`,
+`AuditResultInReview` e `AuditResultDenied`. Use `AuditProperties` no campo
+`EmitInput.AuditProperties` ao chamar `EmitAudit`:
+
+```go
+event, err := client.EmitAudit(ctx, eyeduxsdk.EmitInput{
+  Type: "user.password_changed",
+  AuditProperties: &eyeduxsdk.AuditProperties{
+    Actor:  eyeduxsdk.AuditActor{Type: eyeduxsdk.AuditActorTypeUser, ID: "user_123"},
+    Target: eyeduxsdk.AuditTarget{Type: "user", ID: "user_123"},
+    Result: eyeduxsdk.AuditResultSuccess,
+    StateChanging: true,
+    Changes: map[string]any{
+      "fields": []string{"password"},
+    },
+  },
+})
+```
+
+`EmitAudit` valida ator, alvo e resultado localmente. `Reason` é obrigatório
+para resultados `failure` e `denied`; `AuditActorTypeAnonymous` não exige ID.
+`Changes` permanece livre para acomodar o formato da alteração de cada cliente
+e deve ser informado quando uma ação concluída com sucesso alterar estado.
+Defina `StateChanging: true` para que o SDK valide essa exigência; esse campo é
+apenas local e não é enviado no JSON.
+
 ---
 
 ## Diagnóstico de erros
@@ -458,6 +512,7 @@ type EmitInput struct {
   TypeGroup         string
   EyeduxType        EventEyeduxType
   Properties        map[string]any
+  AuditProperties   *AuditProperties
   Err               error
   Operation         string
   SourceSkip        int

@@ -73,3 +73,43 @@ func TestClientEmitConveniences_useTheirCategories(t *testing.T) {
 		})
 	}
 }
+
+func TestClientEmitAudit_usesStructuredProperties(t *testing.T) {
+	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			EyeduxType EventEyeduxType `json:"eyedux_type"`
+			Properties map[string]any  `json:"properties"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatalf("decode request body: %v", err)
+		}
+		if body.EyeduxType != EventEyeduxTypeAudit {
+			t.Errorf("eyedux_type = %q, want %q", body.EyeduxType, EventEyeduxTypeAudit)
+		}
+		actor := body.Properties["actor"].(map[string]any)
+		if actor["type"] != "service" || actor["id"] != "account-service" {
+			t.Errorf("actor = %v, want service/account-service", actor)
+		}
+		if body.Properties["result"] != "denied" {
+			t.Errorf("result = %v, want denied", body.Properties["result"])
+		}
+		if body.Properties["reason"] != "missing permission" {
+			t.Errorf("reason = %v, want missing permission", body.Properties["reason"])
+		}
+		writeJSON(w, http.StatusCreated, map[string]any{"data": map[string]any{"id": "event-123"}})
+	})
+
+	_, err := c.EmitAudit(context.Background(), EmitInput{
+		ProjectID: "project",
+		Type:      "user.password_changed",
+		AuditProperties: &AuditProperties{
+			Actor:  AuditActor{Type: AuditActorTypeService, ID: "account-service"},
+			Target: AuditTarget{Type: "user", ID: "user_123"},
+			Result: AuditResultDenied,
+			Reason: "missing permission",
+		},
+	})
+	if err != nil {
+		t.Fatalf("EmitAudit: %v", err)
+	}
+}
