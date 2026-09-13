@@ -195,7 +195,7 @@ const (
     EventEyeduxTypeSystemLog     EventEyeduxType = "system-log"
     EventEyeduxTypeSystemDebug   EventEyeduxType = "system-debug"
     EventEyeduxTypeSystemInfo    EventEyeduxType = "system-info"
-    EventEyeduxTypeSystemMetric  EventEyeduxType = "system-metric"
+    EventEyeduxTypeAudit         EventEyeduxType = "audit"
 )
 ```
 
@@ -510,5 +510,4 @@ por motivos puramente técnicos.
 - `CreateEventInput.ProjectID` permanece por compatibilidade e suporte
     temporário a múltiplos projetos. Sua remoção exige uma major version.
 - Os valores predefinidos de `EventEyeduxType` são `system-error`,
-    `system-warning`, `system-log`, `system-debug`, `system-info` e
-    `system-metric`.
+    `system-warning`, `system-log`, `system-debug`, `system-info` e `audit`.

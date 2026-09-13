@@ -171,7 +171,7 @@ o mesmo `EmitInput`:
 })
 ```
 
-Também estão disponíveis `EmitLog`, `EmitDebug`, `EmitInfo` e `EmitMetric`.
+Também estão disponíveis `EmitLog`, `EmitDebug`, `EmitInfo` e `EmitAudit`.
 Esses métodos retornam o `*Event` criado e o erro da API, assim como
 `CreateEvent`.
 

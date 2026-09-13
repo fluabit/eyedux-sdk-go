@@ -143,7 +143,7 @@ event, err := client.CreateEvent(ctx, eyeduxsdk.CreateEventInput{
 Available values are `EventEyeduxTypeSystemError`,
 `EventEyeduxTypeSystemWarning`, `EventEyeduxTypeSystemLog`,
 `EventEyeduxTypeSystemDebug`, `EventEyeduxTypeSystemInfo` and
-`EventEyeduxTypeSystemMetric`.
+`EventEyeduxTypeAudit`.
 
 ### Diagnóstico de erros
 
@@ -167,7 +167,7 @@ retornada em `emitErr` e não substitui o erro original da operação. Para um
 fluxo próprio, use `eyeduxsdk.ErrorProperties` diretamente.
 
 Para as demais categorias predefinidas, use `EmitWarning`, `EmitLog`,
-`EmitDebug`, `EmitInfo` ou `EmitMetric` com o mesmo `EmitInput`.
+`EmitDebug`, `EmitInfo` ou `EmitAudit` com o mesmo `EmitInput`.
 Wrappers que adicionam uma camada própria devem usar `EmitInput.SourceSkip`
 para ajustar a origem registrada.
 

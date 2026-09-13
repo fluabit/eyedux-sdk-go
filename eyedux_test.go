@@ -159,7 +159,7 @@ func TestEventEyeduxTypeValues(t *testing.T) {
 		{name: "system log", value: EventEyeduxTypeSystemLog, want: "system-log"},
 		{name: "system debug", value: EventEyeduxTypeSystemDebug, want: "system-debug"},
 		{name: "system info", value: EventEyeduxTypeSystemInfo, want: "system-info"},
-		{name: "system metric", value: EventEyeduxTypeSystemMetric, want: "system-metric"},
+		{name: "audit", value: EventEyeduxTypeAudit, want: "audit"},
 	}
 
 	for _, test := range tests {

@@ -11,7 +11,7 @@ const (
 	EventEyeduxTypeSystemLog     EventEyeduxType = "system-log"
 	EventEyeduxTypeSystemDebug   EventEyeduxType = "system-debug"
 	EventEyeduxTypeSystemInfo    EventEyeduxType = "system-info"
-	EventEyeduxTypeSystemMetric  EventEyeduxType = "system-metric"
+	EventEyeduxTypeAudit         EventEyeduxType = "audit"
 )
 
 // EventObject is a reference to an external or correlated entity.

@@ -189,7 +189,7 @@ func ErrorProperties(properties map[string]any, err error, operation string) map
 ### Emissão por categoria
 
 O client oferece `Emit` e os atalhos `EmitWarning`, `EmitLog`, `EmitDebug`,
-`EmitInfo` e `EmitMetric`. Eles recebem `EmitInput`, definem a categoria
+`EmitInfo` e `EmitAudit`. Eles recebem `EmitInput`, definem a categoria
 predefinida e delegam para `CreateEvent`. A política de idempotência para
 `409` permanece no consumidor, pois depende da regra de negócio da aplicação.
 
@@ -242,7 +242,7 @@ const (
     EventEyeduxTypeSystemLog     EventEyeduxType = "system-log"
     EventEyeduxTypeSystemDebug   EventEyeduxType = "system-debug"
     EventEyeduxTypeSystemInfo    EventEyeduxType = "system-info"
-    EventEyeduxTypeSystemMetric  EventEyeduxType = "system-metric"
+    EventEyeduxTypeAudit         EventEyeduxType = "audit"
 )
 ```
 

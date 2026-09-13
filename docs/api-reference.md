@@ -397,7 +397,7 @@ autocomplete:
 | `EventEyeduxTypeSystemLog` | `system-log` |
 | `EventEyeduxTypeSystemDebug` | `system-debug` |
 | `EventEyeduxTypeSystemInfo` | `system-info` |
-| `EventEyeduxTypeSystemMetric` | `system-metric` |
+| `EventEyeduxTypeAudit` | `audit` |
 
 `CreateEventInput.EyeduxType` usa o valor vazio quando o campo não deve ser
 enviado. `Event.EyeduxType` é `nil` quando a API retorna `null`.
@@ -478,12 +478,12 @@ func (c *Client) EmitWarning(ctx context.Context, input EmitInput) (*Event, erro
 func (c *Client) EmitLog(ctx context.Context, input EmitInput) (*Event, error)
 func (c *Client) EmitDebug(ctx context.Context, input EmitInput) (*Event, error)
 func (c *Client) EmitInfo(ctx context.Context, input EmitInput) (*Event, error)
-func (c *Client) EmitMetric(ctx context.Context, input EmitInput) (*Event, error)
+func (c *Client) EmitAudit(ctx context.Context, input EmitInput) (*Event, error)
 ```
 
 `Emit` usa `input.EyeduxType`. Os atalhos substituem esse campo e aplicam,
 respectivamente, `system-warning`,
-`system-log`, `system-debug`, `system-info` e `system-metric`.
+`system-log`, `system-debug`, `system-info` e `audit`.
 
 ## Códigos de erro
 

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-09-13
+
+### Breaking Changes
+
+- Removed the `system-metric` event type and its `EmitMetric` convenience helper.
+
+### Added
+
+- Added the `EventEyeduxTypeAudit` constant and `Client.EmitAudit` helper.
+
 ## [0.5.0] - 2026-09-02
 
 ### Breaking Changes

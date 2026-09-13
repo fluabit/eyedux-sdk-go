@@ -44,7 +44,7 @@ func TestClientEmitConveniences_useTheirCategories(t *testing.T) {
 		{name: "log", want: EventEyeduxTypeSystemLog, emit: (*Client).EmitLog},
 		{name: "debug", want: EventEyeduxTypeSystemDebug, emit: (*Client).EmitDebug},
 		{name: "info", want: EventEyeduxTypeSystemInfo, emit: (*Client).EmitInfo},
-		{name: "metric", want: EventEyeduxTypeSystemMetric, emit: (*Client).EmitMetric},
+		{name: "audit", want: EventEyeduxTypeAudit, emit: (*Client).EmitAudit},
 	}
 
 	for _, test := range tests {

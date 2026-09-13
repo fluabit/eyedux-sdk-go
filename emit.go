@@ -57,8 +57,8 @@ func (c *Client) EmitInfo(ctx context.Context, input EmitInput) (*Event, error) 
 	return c.Emit(ctx, input)
 }
 
-// EmitMetric creates a system-metric event.
-func (c *Client) EmitMetric(ctx context.Context, input EmitInput) (*Event, error) {
-	input.EyeduxType = EventEyeduxTypeSystemMetric
+// EmitAudit creates an audit event.
+func (c *Client) EmitAudit(ctx context.Context, input EmitInput) (*Event, error) {
+	input.EyeduxType = EventEyeduxTypeAudit
 	return c.Emit(ctx, input)
 }
