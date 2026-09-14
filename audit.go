@@ -30,14 +30,16 @@ const (
 // AuditActor identifies who or what performed an audited action.
 // Anonymous actors do not require an ID.
 type AuditActor struct {
-	Type AuditActorType `json:"type"`
-	ID   string         `json:"id,omitempty"`
+	Type   AuditActorType `json:"type"`
+	ID     string         `json:"id,omitempty"`
+	Source string         `json:"source"`
 }
 
 // AuditTarget identifies the entity affected by an audited action.
 type AuditTarget struct {
-	Type string `json:"type"`
-	ID   string `json:"id"`
+	Type   string `json:"type"`
+	ID     string `json:"id"`
+	Source string `json:"source"`
 }
 
 // AuditProperties is the structured properties payload for an audit event.
@@ -73,6 +75,9 @@ func validateAuditActor(actor AuditActor) error {
 	if actor.Type != AuditActorTypeAnonymous && strings.TrimSpace(actor.ID) == "" {
 		return fmt.Errorf("eyedux: audit actor id is required for actor type %q", actor.Type)
 	}
+	if strings.TrimSpace(actor.Source) == "" {
+		return fmt.Errorf("eyedux: audit actor source is required")
+	}
 	return nil
 }
 
@@ -82,6 +87,9 @@ func validateAuditTarget(target AuditTarget) error {
 	}
 	if strings.TrimSpace(target.ID) == "" {
 		return fmt.Errorf("eyedux: audit target id is required")
+	}
+	if strings.TrimSpace(target.Source) == "" {
+		return fmt.Errorf("eyedux: audit target source is required")
 	}
 	return nil
 }

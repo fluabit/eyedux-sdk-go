@@ -8,12 +8,14 @@ import (
 func TestAuditPropertiesToMap(t *testing.T) {
 	properties, err := (AuditProperties{
 		Actor: AuditActor{
-			Type: AuditActorTypeUser,
-			ID:   "user_123",
+			Type:   AuditActorTypeUser,
+			ID:     "user_123",
+			Source: "identity-service",
 		},
 		Target: AuditTarget{
-			Type: "user",
-			ID:   "user_123",
+			Type:   "user",
+			ID:     "user_123",
+			Source: "identity-service",
 		},
 		Result:        AuditResultSuccess,
 		StateChanging: true,
@@ -40,6 +42,12 @@ func TestAuditPropertiesToMap(t *testing.T) {
 	if got["actor"].(map[string]any)["id"] != "user_123" {
 		t.Errorf("actor.id = %v, want user_123", got["actor"].(map[string]any)["id"])
 	}
+	if got["actor"].(map[string]any)["source"] != "identity-service" {
+		t.Errorf("actor.source = %v, want identity-service", got["actor"].(map[string]any)["source"])
+	}
+	if got["target"].(map[string]any)["source"] != "identity-service" {
+		t.Errorf("target.source = %v, want identity-service", got["target"].(map[string]any)["source"])
+	}
 	if got["result"] != "success" {
 		t.Errorf("result = %v, want success", got["result"])
 	}
@@ -50,8 +58,8 @@ func TestAuditPropertiesToMap(t *testing.T) {
 
 func TestAuditPropertiesToMap_anonymousActorOmitsID(t *testing.T) {
 	properties, err := (AuditProperties{
-		Actor:  AuditActor{Type: AuditActorTypeAnonymous},
-		Target: AuditTarget{Type: "document", ID: "doc_123"},
+		Actor:  AuditActor{Type: AuditActorTypeAnonymous, Source: "auth-service"},
+		Target: AuditTarget{Type: "document", ID: "doc_123", Source: "document-service"},
 		Result: AuditResultSuccess,
 	}).ToMap()
 	if err != nil {
@@ -62,15 +70,15 @@ func TestAuditPropertiesToMap_anonymousActorOmitsID(t *testing.T) {
 	if err != nil {
 		t.Fatalf("marshal properties: %v", err)
 	}
-	if string(encoded) != `{"actor":{"type":"anonymous"},"result":"success","target":{"type":"document","id":"doc_123"}}` {
+	if string(encoded) != `{"actor":{"type":"anonymous","source":"auth-service"},"result":"success","target":{"type":"document","id":"doc_123","source":"document-service"}}` {
 		t.Errorf("properties JSON = %s", encoded)
 	}
 }
 
 func TestAuditPropertiesToMap_acceptsCustomActorAndInReviewResult(t *testing.T) {
 	properties, err := (AuditProperties{
-		Actor:  AuditActor{Type: "automation", ID: "workflow-123"},
-		Target: AuditTarget{Type: "deployment", ID: "deploy-123"},
+		Actor:  AuditActor{Type: "automation", ID: "workflow-123", Source: "workflow-service"},
+		Target: AuditTarget{Type: "deployment", ID: "deploy-123", Source: "deployment-service"},
 		Result: AuditResultInReview,
 	}).ToMap()
 	if err != nil {
@@ -99,47 +107,47 @@ func TestAuditPropertiesToMap_rejectsInvalidProperties(t *testing.T) {
 		{
 			name: "missing actor id",
 			properties: AuditProperties{
-				Actor:  AuditActor{Type: AuditActorTypeUser},
-				Target: AuditTarget{Type: "user", ID: "user_123"},
+				Actor:  AuditActor{Type: AuditActorTypeUser, Source: "identity-service"},
+				Target: AuditTarget{Type: "user", ID: "user_123", Source: "identity-service"},
 				Result: AuditResultSuccess,
 			},
 		},
 		{
 			name: "custom actor without id",
 			properties: AuditProperties{
-				Actor:  AuditActor{Type: "automation"},
-				Target: AuditTarget{Type: "deployment", ID: "deploy-123"},
+				Actor:  AuditActor{Type: "automation", Source: "workflow-service"},
+				Target: AuditTarget{Type: "deployment", ID: "deploy-123", Source: "deployment-service"},
 				Result: AuditResultInReview,
 			},
 		},
 		{
 			name: "missing target",
 			properties: AuditProperties{
-				Actor:  AuditActor{Type: AuditActorTypeSystem, ID: "system"},
+				Actor:  AuditActor{Type: AuditActorTypeSystem, ID: "system", Source: "system-service"},
 				Result: AuditResultSuccess,
 			},
 		},
 		{
 			name: "failure without reason",
 			properties: AuditProperties{
-				Actor:  AuditActor{Type: AuditActorTypeService, ID: "account-service"},
-				Target: AuditTarget{Type: "user", ID: "user_123"},
+				Actor:  AuditActor{Type: AuditActorTypeService, ID: "account-service", Source: "account-service"},
+				Target: AuditTarget{Type: "user", ID: "user_123", Source: "identity-service"},
 				Result: AuditResultFailure,
 			},
 		},
 		{
 			name: "denied without reason",
 			properties: AuditProperties{
-				Actor:  AuditActor{Type: AuditActorTypeService, ID: "account-service"},
-				Target: AuditTarget{Type: "user", ID: "user_123"},
+				Actor:  AuditActor{Type: AuditActorTypeService, ID: "account-service", Source: "account-service"},
+				Target: AuditTarget{Type: "user", ID: "user_123", Source: "identity-service"},
 				Result: AuditResultDenied,
 			},
 		},
 		{
 			name: "state-changing success without changes",
 			properties: AuditProperties{
-				Actor:         AuditActor{Type: AuditActorTypeUser, ID: "user_123"},
-				Target:        AuditTarget{Type: "user", ID: "user_123"},
+				Actor:         AuditActor{Type: AuditActorTypeUser, ID: "user_123", Source: "identity-service"},
+				Target:        AuditTarget{Type: "user", ID: "user_123", Source: "identity-service"},
 				Result:        AuditResultSuccess,
 				StateChanging: true,
 			},
@@ -147,9 +155,25 @@ func TestAuditPropertiesToMap_rejectsInvalidProperties(t *testing.T) {
 		{
 			name: "invalid result",
 			properties: AuditProperties{
-				Actor:  AuditActor{Type: AuditActorTypeSystem, ID: "system"},
-				Target: AuditTarget{Type: "user", ID: "user_123"},
+				Actor:  AuditActor{Type: AuditActorTypeSystem, ID: "system", Source: "system-service"},
+				Target: AuditTarget{Type: "user", ID: "user_123", Source: "identity-service"},
 				Result: "pending",
+			},
+		},
+		{
+			name: "missing actor source",
+			properties: AuditProperties{
+				Actor:  AuditActor{Type: AuditActorTypeUser, ID: "user_123"},
+				Target: AuditTarget{Type: "user", ID: "user_123", Source: "identity-service"},
+				Result: AuditResultSuccess,
+			},
+		},
+		{
+			name: "blank target source",
+			properties: AuditProperties{
+				Actor:  AuditActor{Type: AuditActorTypeUser, ID: "user_123", Source: "identity-service"},
+				Target: AuditTarget{Type: "user", ID: "user_123", Source: "  "},
+				Result: AuditResultSuccess,
 			},
 		},
 	}

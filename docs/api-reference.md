@@ -419,11 +419,13 @@ type AuditProperties struct {
 type AuditActor struct {
   Type AuditActorType
   ID   string
+  Source string
 }
 
 type AuditTarget struct {
   Type string
   ID   string
+  Source string
 }
 ```
 
@@ -438,8 +440,8 @@ Os resultados disponíveis são `AuditResultSuccess`, `AuditResultFailure`,
 event, err := client.EmitAudit(ctx, eyeduxsdk.EmitInput{
   Type: "user.password_changed",
   AuditProperties: &eyeduxsdk.AuditProperties{
-    Actor:  eyeduxsdk.AuditActor{Type: eyeduxsdk.AuditActorTypeUser, ID: "user_123"},
-    Target: eyeduxsdk.AuditTarget{Type: "user", ID: "user_123"},
+    Actor:  eyeduxsdk.AuditActor{Type: eyeduxsdk.AuditActorTypeUser, ID: "user_123", Source: "identity-service"},
+    Target: eyeduxsdk.AuditTarget{Type: "user", ID: "user_123", Source: "identity-service"},
     Result: eyeduxsdk.AuditResultSuccess,
     StateChanging: true,
     Changes: map[string]any{
@@ -450,8 +452,9 @@ event, err := client.EmitAudit(ctx, eyeduxsdk.EmitInput{
 ```
 
 `EmitAudit` valida ator, alvo e resultado localmente. `Reason` é obrigatório
-para resultados `failure` e `denied`; `AuditActorTypeAnonymous` não exige ID.
-`Changes` permanece livre para acomodar o formato da alteração de cada cliente
+para resultados `failure` e `denied`; `Source` é obrigatório e não pode ser uma
+string vazia ou composta apenas por espaços. `AuditActorTypeAnonymous` não exige
+ID. `Changes` permanece livre para acomodar o formato da alteração de cada cliente
 e deve ser informado quando uma ação concluída com sucesso alterar estado.
 Defina `StateChanging: true` para que o SDK valide essa exigência; esse campo é
 apenas local e não é enviado no JSON.

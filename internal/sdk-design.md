@@ -259,6 +259,7 @@ customizados não vazios também são aceitos. Os resultados aceitos incluem
 `success`, `failure`, `in_review` e `denied`; `changes` deve ser informado para
 ações concluídas com sucesso que alterem estado. `StateChanging` é um campo
 somente do SDK (`json:"-"`) que ativa essa validação sem alterar o payload.
+`actor.source` e `target.source` são obrigatórios e devem ser strings não vazias.
 
 ### ListEventsInput
 

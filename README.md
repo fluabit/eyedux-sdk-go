@@ -157,10 +157,12 @@ event, err := client.EmitAudit(ctx, eyeduxsdk.EmitInput{
         Actor: eyeduxsdk.AuditActor{
             Type: eyeduxsdk.AuditActorTypeService,
             ID:   "account-service",
+            Source: "account-service",
         },
         Target: eyeduxsdk.AuditTarget{
-            Type: "user",
-            ID:   "user_123",
+            Type:   "user",
+            ID:     "user_123",
+            Source: "identity-service",
         },
         Result: eyeduxsdk.AuditResultSuccess,
         StateChanging: true,
@@ -174,7 +176,9 @@ event, err := client.EmitAudit(ctx, eyeduxsdk.EmitInput{
 `AuditActorTypeUser`, `AuditActorTypeService`, `AuditActorTypeSystem`,
 `AuditActorTypeAdmin` e `AuditActorTypeAnonymous` são valores convencionais;
 tipos customizados não vazios também são aceitos. `AuditActorTypeAnonymous`
-dispensa o ID. `AuditResultInReview` representa uma ação sob análise ou ainda
+dispensa o ID, mas `Source` é obrigatório para qualquer ator. `Source` também
+é obrigatório para o alvo e deve ser uma string não vazia; valores só com
+espaços são rejeitados. `AuditResultInReview` representa uma ação sob análise ou ainda
 aguardando conclusão. `Reason` é obrigatório para `AuditResultFailure` e
 `AuditResultDenied`. `Changes` aceita um objeto livre e deve ser informado
 quando uma ação concluída com sucesso alterar estado. Nesse caso, defina

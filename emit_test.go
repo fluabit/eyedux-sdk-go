@@ -87,8 +87,8 @@ func TestClientEmitAudit_usesStructuredProperties(t *testing.T) {
 			t.Errorf("eyedux_type = %q, want %q", body.EyeduxType, EventEyeduxTypeAudit)
 		}
 		actor := body.Properties["actor"].(map[string]any)
-		if actor["type"] != "service" || actor["id"] != "account-service" {
-			t.Errorf("actor = %v, want service/account-service", actor)
+		if actor["type"] != "service" || actor["id"] != "account-service" || actor["source"] != "account-service" {
+			t.Errorf("actor = %v, want service/account-service/account-service", actor)
 		}
 		if body.Properties["result"] != "denied" {
 			t.Errorf("result = %v, want denied", body.Properties["result"])
@@ -103,8 +103,8 @@ func TestClientEmitAudit_usesStructuredProperties(t *testing.T) {
 		ProjectID: "project",
 		Type:      "user.password_changed",
 		AuditProperties: &AuditProperties{
-			Actor:  AuditActor{Type: AuditActorTypeService, ID: "account-service"},
-			Target: AuditTarget{Type: "user", ID: "user_123"},
+			Actor:  AuditActor{Type: AuditActorTypeService, ID: "account-service", Source: "account-service"},
+			Target: AuditTarget{Type: "user", ID: "user_123", Source: "identity-service"},
 			Result: AuditResultDenied,
 			Reason: "missing permission",
 		},
