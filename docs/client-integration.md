@@ -175,6 +175,33 @@ Também estão disponíveis `EmitLog`, `EmitDebug`, `EmitInfo` e `EmitAudit`.
 Esses métodos retornam o `*Event` criado e o erro da API, assim como
 `CreateEvent`.
 
+## Emitindo métricas
+
+Use `EmitMetric` para registrar um valor numérico com unidade e, opcionalmente,
+dimensões para agrupamento:
+
+```go
+func TrackRequestDuration(ctx context.Context, client *eyeduxsdk.Client, route string, duration time.Duration) error {
+	_, err := client.EmitMetric(ctx, eyeduxsdk.EmitInput{
+		Type: "api.request.duration",
+		MetricProperties: &eyeduxsdk.MetricProperties{
+			Value: duration.Seconds() * 1000,
+			Unit:  eyeduxsdk.MetricUnitMilliseconds,
+			Dimensions: map[string]string{
+				"route": route,
+			},
+		},
+	})
+	return err
+}
+```
+
+O SDK valida localmente que o valor seja finito, que a unidade seja suportada
+e que percentuais, ratios e dimensões respeitem seus limites. As unidades
+disponíveis são `count`, `bytes`, `milliseconds`, `seconds`, `percent` e
+`ratio`; consulte a [referência de `MetricProperties`](api-reference.md#metricproperties)
+para as regras completas.
+
 ## Contexto e timeout
 
 Passe o contexto recebido pela aplicação para cada chamada. Em handlers HTTP,

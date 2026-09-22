@@ -13,7 +13,7 @@
   - [GET /public/logs — Listar eventos](#get-publiclogs-listar-eventos)
   - [GET /public/logs/external/:external_id — Buscar por ID externo](#get-publiclogsexternalexternal_id-buscar-por-id-externo)
 6. [Modelos de dados](#modelos-de-dados)
-7. [Diagnóstico de erros](#diagnóstico-de-erros)
+7. [Diagnóstico de erros](#diagnostico-de-erros)
 8. [Códigos de erro](#codigos-de-erro)
 
 ---
@@ -398,6 +398,7 @@ autocomplete:
 | `EventEyeduxTypeSystemDebug` | `system-debug` |
 | `EventEyeduxTypeSystemInfo` | `system-info` |
 | `EventEyeduxTypeAudit` | `audit` |
+| `EventEyeduxTypeMetric` | `metric` |
 
 `CreateEventInput.EyeduxType` usa o valor vazio quando o campo não deve ser
 enviado. `Event.EyeduxType` é `nil` quando a API retorna `null`.
@@ -459,6 +460,56 @@ e deve ser informado quando uma ação concluída com sucesso alterar estado.
 Defina `StateChanging: true` para que o SDK valide essa exigência; esse campo é
 apenas local e não é enviado no JSON.
 
+### MetricProperties
+
+Modelo tipado para `properties` de eventos `metric`:
+
+```go
+type MetricProperties struct {
+  Value      float64
+  Unit       MetricUnit
+  Dimensions map[string]string
+}
+```
+
+As unidades disponíveis são:
+
+| Constante | Valor JSON | Regra do valor |
+|-----------|------------|----------------|
+| `MetricUnitCount` | `count` | Número finito |
+| `MetricUnitBytes` | `bytes` | Número finito |
+| `MetricUnitMilliseconds` | `milliseconds` | Número finito |
+| `MetricUnitSeconds` | `seconds` | Número finito |
+| `MetricUnitPercent` | `percent` | Entre `0` e `100` |
+| `MetricUnitRatio` | `ratio` | Entre `0` e `1` |
+
+`Value` deve ser finito e `Unit` é obrigatório. `Dimensions` pode ter até 10
+entradas, com chaves de até 64 bytes iniciadas por letra minúscula e contendo
+apenas letras minúsculas, números, `.`, `_` ou `-`. Chaves iniciadas por `__`
+não são aceitas; valores têm limite de 128 bytes e o JSON completo de dimensões
+tem limite de 2048 bytes.
+
+Use `MetricProperties` no campo `EmitInput.MetricProperties` ao chamar
+`EmitMetric`:
+
+```go
+event, err := client.EmitMetric(ctx, eyeduxsdk.EmitInput{
+  Type: "api.request.duration",
+  MetricProperties: &eyeduxsdk.MetricProperties{
+    Value: 120.5,
+    Unit:  eyeduxsdk.MetricUnitMilliseconds,
+    Dimensions: map[string]string{
+      "route":  "/checkout",
+      "region": "br-sp",
+    },
+  },
+})
+```
+
+`EmitMetric` valida o modelo localmente, converte-o para `Properties` e aplica
+`EventEyeduxTypeMetric`. Em caso de erro de validação, nenhuma requisição é
+enviada à API.
+
 ---
 
 ## Diagnóstico de erros
@@ -516,6 +567,7 @@ type EmitInput struct {
   EyeduxType        EventEyeduxType
   Properties        map[string]any
   AuditProperties   *AuditProperties
+  MetricProperties  *MetricProperties
   Err               error
   Operation         string
   SourceSkip        int
@@ -537,11 +589,12 @@ func (c *Client) EmitLog(ctx context.Context, input EmitInput) (*Event, error)
 func (c *Client) EmitDebug(ctx context.Context, input EmitInput) (*Event, error)
 func (c *Client) EmitInfo(ctx context.Context, input EmitInput) (*Event, error)
 func (c *Client) EmitAudit(ctx context.Context, input EmitInput) (*Event, error)
+func (c *Client) EmitMetric(ctx context.Context, input EmitInput) (*Event, error)
 ```
 
 `Emit` usa `input.EyeduxType`. Os atalhos substituem esse campo e aplicam,
 respectivamente, `system-warning`,
-`system-log`, `system-debug`, `system-info` e `audit`.
+`system-log`, `system-debug`, `system-info`, `audit` e `metric`.
 
 ## Códigos de erro
 
