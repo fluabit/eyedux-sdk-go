@@ -5,6 +5,7 @@ import "context"
 // EmitInput contains the fields used by the convenience emission methods.
 // Err, Operation, and SourceSkip are used by EmitError and are ignored by the
 // other emission methods. AuditProperties is used by EmitAudit when provided.
+// MetricProperties is used by EmitMetric when provided.
 type EmitInput struct {
 	ProjectID         string
 	Type              string
@@ -12,6 +13,7 @@ type EmitInput struct {
 	EyeduxType        EventEyeduxType
 	Properties        map[string]any
 	AuditProperties   *AuditProperties
+	MetricProperties  *MetricProperties
 	Err               error
 	Operation         string
 	SourceSkip        int
@@ -68,5 +70,18 @@ func (c *Client) EmitAudit(ctx context.Context, input EmitInput) (*Event, error)
 		input.Properties = properties
 	}
 	input.EyeduxType = EventEyeduxTypeAudit
+	return c.Emit(ctx, input)
+}
+
+// EmitMetric creates a metric event.
+func (c *Client) EmitMetric(ctx context.Context, input EmitInput) (*Event, error) {
+	if input.MetricProperties != nil {
+		properties, err := input.MetricProperties.ToMap()
+		if err != nil {
+			return nil, err
+		}
+		input.Properties = properties
+	}
+	input.EyeduxType = EventEyeduxTypeMetric
 	return c.Emit(ctx, input)
 }

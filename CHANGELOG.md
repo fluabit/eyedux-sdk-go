@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-09-22
+
+### Added
+
+- Added the `EventEyeduxTypeMetric` constant, typed `MetricProperties` for
+  structured metric event properties (value, unit, dimensions), and
+  `Client.EmitMetric` with local validation of the metric contract (finite
+  value, supported unit, percent/ratio bounds, and dimension constraints).
+
 ## [0.8.0] - 2026-09-13
 
 ### Breaking Changes
@@ -152,7 +161,8 @@ decidida pelo consumidor. Consumidores que usam apenas a API estável de
 - Structured API error handling (`APIError`, `IsConflict`, `IsNotFound`, `IsAuthError`).
 - `ErrEmptyAPIKey`, `ErrEmptyExternalID` sentinel errors.
 
-[Unreleased]: https://github.com/fluabit/eyedux-sdk-go/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/fluabit/eyedux-sdk-go/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/fluabit/eyedux-sdk-go/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/fluabit/eyedux-sdk-go/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/fluabit/eyedux-sdk-go/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/fluabit/eyedux-sdk-go/compare/v0.5.0...v0.6.0
