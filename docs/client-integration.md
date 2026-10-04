@@ -114,6 +114,21 @@ valor. Os valores precisam ser serializáveis como JSON. `Type` é obrigatório;
 são opcionais. `Message` é um resumo legível do evento e aceita até 500
 caracteres (`eyeduxsdk.MaxEventMessageLength`).
 
+Para eventos `system-*`, `metric` e `audit`, o SDK acrescenta automaticamente
+em `Metadata` o sistema operacional, arquitetura, versão do Go, número de
+CPUs, goroutines, uso de memória do processo, hostname e endereços IP locais
+não loopback. Os metadados informados pela aplicação substituem chaves
+automáticas de mesmo nome. Para desativar a coleta na criação do client:
+
+```go
+client, err := eyeduxsdk.New(
+	"sua-api-key",
+	eyeduxsdk.WithAutomaticMetadata(false),
+)
+```
+
+Com `NewWithConfig`, use `DisableAutomaticMetadata: true`.
+
 ## Emitindo erros com diagnóstico
 
 Use `EmitError` quando uma falha da aplicação também precisar ser registrada

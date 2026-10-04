@@ -63,6 +63,7 @@ Retorna `ErrEmptyAPIKey` se `apiKey` for vazio. A base URL (`https://api.eyedux.
 | `eyeduxsdk.WithHTTPClient(c)` | Substitui o `*http.Client` inteiro | `&http.Client{Timeout: 30s}` |
 | `eyeduxsdk.WithProjectID(id)` | Define o projeto padrão dos eventos | vazio |
 | `eyeduxsdk.WithDefaultMetadata(m)` | Adiciona metadados padrão aos eventos | vazio |
+| `eyeduxsdk.WithAutomaticMetadata(false)` | Desativa a coleta automática de metadados de runtime | habilitada |
 
 ```go
 // Timeout customizado
@@ -72,6 +73,19 @@ client, err := eyeduxsdk.New("sua-api-key", eyeduxsdk.WithTimeout(10*time.Second
 client, err := eyeduxsdk.New("sua-api-key", eyeduxsdk.WithHTTPClient(meuHTTPClient))
 ```
 
+Para eventos `system-*`, `metric` e `audit`, o SDK inclui por padrão em
+`Metadata` informações do runtime: sistema operacional, arquitetura, versão
+do Go, número de CPUs, goroutines, memória do processo, hostname e endereços
+IP locais não loopback. Metadados fornecidos pelo integrador prevalecem sobre
+os valores automáticos. Para não enviar esses dados:
+
+```go
+client, err := eyeduxsdk.New(
+    "sua-api-key",
+    eyeduxsdk.WithAutomaticMetadata(false),
+)
+```
+
 ### `eyeduxsdk.NewWithConfig`
 
 Use `NewWithConfig` when the application already has an explicit configuration.
@@ -79,9 +93,10 @@ Use `NewWithConfig` when the application already has an explicit configuration.
 
 ```go
 client, err := eyeduxsdk.NewWithConfig(eyeduxsdk.Config{
-    APIKey:    "sua-api-key",
-    ProjectID: "64f1a2b3c4d5e6f7a8b9c0d1",
-    Timeout:   2 * time.Second,
+    APIKey:                   "sua-api-key",
+    ProjectID:                "64f1a2b3c4d5e6f7a8b9c0d1",
+    Timeout:                  2 * time.Second,
+    DisableAutomaticMetadata: true,
 })
 ```
 

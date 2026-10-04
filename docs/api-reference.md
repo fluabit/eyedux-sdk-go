@@ -382,6 +382,27 @@ Entrada para criação de evento.
 | `CorrelationObject` | `*EventObject` | Não |
 | `Metadata` | `map[string]any` | Não |
 
+Para eventos `system-*`, `metric` e `audit`, o SDK inclui automaticamente em
+`Metadata` os seguintes campos:
+
+| Campo | Conteúdo |
+|-------|----------|
+| `runtime.os` | Sistema operacional |
+| `runtime.architecture` | Arquitetura da CPU |
+| `runtime.go_version` | Versão do runtime Go |
+| `runtime.cpu_count` | Número de CPUs lógicas disponíveis |
+| `runtime.goroutines` | Número de goroutines no momento da emissão |
+| `memory.alloc_bytes` | Memória alocada pelo processo |
+| `memory.heap_alloc_bytes` | Memória de heap alocada pelo processo |
+| `memory.sys_bytes` | Memória obtida do sistema pelo runtime Go |
+| `hostname` | Nome do host, quando disponível |
+| `ip_addresses` | Endereços IP locais não loopback, quando disponíveis |
+
+Metadados fornecidos em `DefaultMetadata` ou no input do evento substituem os
+valores automáticos de mesma chave. A coleta é habilitada por padrão e pode ser
+desativada com `WithAutomaticMetadata(false)` ou
+`Config.DisableAutomaticMetadata: true`.
+
 ### ListEventsInput
 
 Filtros para listagem de eventos.

@@ -15,27 +15,31 @@ const defaultBaseURL = "https://api.eyedux.com"
 // Client communicates with the Eyedux API.
 // Create one with New; do not copy after first use.
 type Client struct {
-	apiKey          string
-	baseURL         string
-	httpClient      *http.Client
-	projectID       string
-	defaultMetadata map[string]any
+	apiKey            string
+	baseURL           string
+	httpClient        *http.Client
+	projectID         string
+	defaultMetadata   map[string]any
+	automaticMetadata bool
+	metadataProvider  func() map[string]any
 }
 
 type config struct {
-	timeout         time.Duration
-	httpClient      *http.Client
-	projectID       string
-	defaultMetadata map[string]any
+	timeout           time.Duration
+	httpClient        *http.Client
+	projectID         string
+	defaultMetadata   map[string]any
+	automaticMetadata bool
 }
 
 // Config contains the required and optional settings for a Client.
 type Config struct {
-	APIKey          string
-	ProjectID       string
-	HTTPClient      *http.Client
-	Timeout         time.Duration
-	DefaultMetadata map[string]any
+	APIKey                   string
+	ProjectID                string
+	HTTPClient               *http.Client
+	Timeout                  time.Duration
+	DefaultMetadata          map[string]any
+	DisableAutomaticMetadata bool
 }
 
 // Option configures a Client at construction time.
@@ -63,6 +67,12 @@ func WithDefaultMetadata(metadata map[string]any) Option {
 	return func(c *config) { c.defaultMetadata = cloneMap(metadata) }
 }
 
+// WithAutomaticMetadata controls collection of runtime metadata for system,
+// audit, and metric events. It is enabled by default.
+func WithAutomaticMetadata(enabled bool) Option {
+	return func(c *config) { c.automaticMetadata = enabled }
+}
+
 // New creates a Client authenticated with apiKey.
 // Returns ErrEmptyAPIKey if apiKey is empty.
 func New(apiKey string, opts ...Option) (*Client, error) {
@@ -71,7 +81,7 @@ func New(apiKey string, opts ...Option) (*Client, error) {
 		return nil, ErrEmptyAPIKey
 	}
 
-	cfg := &config{timeout: 30 * time.Second}
+	cfg := &config{timeout: 30 * time.Second, automaticMetadata: true}
 	for _, opt := range opts {
 		opt(cfg)
 	}
@@ -82,11 +92,13 @@ func New(apiKey string, opts ...Option) (*Client, error) {
 	}
 
 	return &Client{
-		apiKey:          apiKey,
-		baseURL:         defaultBaseURL,
-		httpClient:      httpClient,
-		projectID:       cfg.projectID,
-		defaultMetadata: cloneMap(cfg.defaultMetadata),
+		apiKey:            apiKey,
+		baseURL:           defaultBaseURL,
+		httpClient:        httpClient,
+		projectID:         cfg.projectID,
+		defaultMetadata:   cloneMap(cfg.defaultMetadata),
+		automaticMetadata: cfg.automaticMetadata,
+		metadataProvider:  collectRuntimeMetadata,
 	}, nil
 }
 
@@ -109,6 +121,9 @@ func NewWithConfig(cfg Config) (*Client, error) {
 	}
 	if cfg.DefaultMetadata != nil {
 		opts = append(opts, WithDefaultMetadata(cfg.DefaultMetadata))
+	}
+	if cfg.DisableAutomaticMetadata {
+		opts = append(opts, WithAutomaticMetadata(false))
 	}
 
 	return New(cfg.APIKey, opts...)
@@ -142,7 +157,11 @@ func (c *Client) CreateEvent(ctx context.Context, input CreateEventInput) (*Even
 		return nil, ErrEmptyProjectID
 	}
 	input.ProjectID = strings.TrimSpace(input.ProjectID)
-	input.Metadata = mergeMaps(c.defaultMetadata, input.Metadata)
+	defaultMetadata := c.defaultMetadata
+	if c.automaticMetadata && isRuntimeMetadataEvent(input.EyeduxType) && c.metadataProvider != nil {
+		defaultMetadata = mergeMaps(c.metadataProvider(), defaultMetadata)
+	}
+	input.Metadata = mergeMaps(defaultMetadata, input.Metadata)
 	body := createEventBody(input)
 
 	var env successEnvelope[*Event]
