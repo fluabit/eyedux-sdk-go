@@ -154,6 +154,7 @@ func TestEventEyeduxTypeValues(t *testing.T) {
 		value EventEyeduxType
 		want  string
 	}{
+		{name: "system critical", value: EventEyeduxTypeSystemCritical, want: "system-critical"},
 		{name: "system error", value: EventEyeduxTypeSystemError, want: "system-error"},
 		{name: "system warning", value: EventEyeduxTypeSystemWarning, want: "system-warning"},
 		{name: "system log", value: EventEyeduxTypeSystemLog, want: "system-log"},
@@ -190,6 +191,7 @@ func successCreateEventHandler(t *testing.T, expectedEyeduxType EventEyeduxType)
 		}
 		var requestBody struct {
 			EyeduxType *EventEyeduxType `json:"eyedux_type"`
+			Message    string           `json:"message"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
 			t.Fatalf("decode request body: %v", err)
@@ -197,11 +199,15 @@ func successCreateEventHandler(t *testing.T, expectedEyeduxType EventEyeduxType)
 		if requestBody.EyeduxType == nil || *requestBody.EyeduxType != expectedEyeduxType {
 			t.Errorf("eyedux_type = %v, want %q", requestBody.EyeduxType, expectedEyeduxType)
 		}
+		if requestBody.Message != "User signed up" {
+			t.Errorf("message = %q, want %q", requestBody.Message, "User signed up")
+		}
 		writeJSON(w, http.StatusCreated, map[string]any{
 			"data": map[string]any{
 				"id":          "abc123",
 				"environment": "production",
 				"eyedux_type": "system-log",
+				"message":     "User signed up",
 				"type":        "user.signup",
 				"properties":  map[string]any{"plan": "pro"},
 				"status":      "active",
@@ -220,6 +226,7 @@ func TestCreateEvent_success(t *testing.T) {
 	event, err := c.CreateEvent(context.Background(), CreateEventInput{
 		ProjectID:  "64f1a2b3c4d5e6f7a8b9c0d1",
 		Type:       "user.signup",
+		Message:    "User signed up",
 		EyeduxType: eyeduxType,
 		Properties: map[string]any{"plan": "pro"},
 	})
@@ -237,6 +244,9 @@ func TestCreateEvent_success(t *testing.T) {
 	}
 	if event.EyeduxType == nil || *event.EyeduxType != eyeduxType {
 		t.Errorf("EyeduxType = %v, want %q", event.EyeduxType, eyeduxType)
+	}
+	if event.Message == nil || *event.Message != "User signed up" {
+		t.Errorf("Message = %v, want %q", event.Message, "User signed up")
 	}
 	if event.Status != "active" {
 		t.Errorf("Status = %s, want active", event.Status)

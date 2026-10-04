@@ -125,6 +125,7 @@ type createEventBody struct {
 	ProjectID         string          `json:"project_id"`
 	Type              string          `json:"type"`
 	TypeGroup         string          `json:"type_group,omitempty"`
+	Message           string          `json:"message,omitempty"`
 	EyeduxType        EventEyeduxType `json:"eyedux_type,omitempty"`
 	Properties        map[string]any  `json:"properties"`
 	ExternalObject    *EventObject    `json:"external_object,omitempty"`

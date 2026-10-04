@@ -13,6 +13,7 @@ func TestClientEmit_usesRequestedEyeduxType(t *testing.T) {
 	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
 		var body struct {
 			EyeduxType EventEyeduxType `json:"eyedux_type"`
+			Message    string          `json:"message"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			t.Fatalf("decode request body: %v", err)
@@ -20,12 +21,16 @@ func TestClientEmit_usesRequestedEyeduxType(t *testing.T) {
 		if body.EyeduxType != expectedType {
 			t.Errorf("eyedux_type = %q, want %q", body.EyeduxType, expectedType)
 		}
+		if body.Message != "Request failed critically" {
+			t.Errorf("message = %q, want %q", body.Message, "Request failed critically")
+		}
 		writeJSON(w, http.StatusCreated, map[string]any{"data": map[string]any{"id": "event-123"}})
 	})
 
 	_, err := c.Emit(context.Background(), EmitInput{
 		ProjectID:  "project",
 		Type:       "api.request",
+		Message:    "Request failed critically",
 		Properties: map[string]any{"method": "GET"},
 		EyeduxType: expectedType,
 	})
@@ -40,6 +45,7 @@ func TestClientEmitConveniences_useTheirCategories(t *testing.T) {
 		want EventEyeduxType
 		emit func(*Client, context.Context, EmitInput) (*Event, error)
 	}{
+		{name: "critical", want: EventEyeduxTypeSystemCritical, emit: (*Client).EmitCritical},
 		{name: "warning", want: EventEyeduxTypeSystemWarning, emit: (*Client).EmitWarning},
 		{name: "log", want: EventEyeduxTypeSystemLog, emit: (*Client).EmitLog},
 		{name: "debug", want: EventEyeduxTypeSystemDebug, emit: (*Client).EmitDebug},

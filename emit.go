@@ -10,6 +10,7 @@ type EmitInput struct {
 	ProjectID         string
 	Type              string
 	TypeGroup         string
+	Message           string
 	EyeduxType        EventEyeduxType
 	Properties        map[string]any
 	AuditProperties   *AuditProperties
@@ -28,12 +29,19 @@ func (c *Client) Emit(ctx context.Context, input EmitInput) (*Event, error) {
 		ProjectID:         input.ProjectID,
 		Type:              input.Type,
 		TypeGroup:         input.TypeGroup,
+		Message:           input.Message,
 		EyeduxType:        input.EyeduxType,
 		Properties:        input.Properties,
 		ExternalObject:    input.ExternalObject,
 		CorrelationObject: input.CorrelationObject,
 		Metadata:          input.Metadata,
 	})
+}
+
+// EmitCritical creates a system-critical event.
+func (c *Client) EmitCritical(ctx context.Context, input EmitInput) (*Event, error) {
+	input.EyeduxType = EventEyeduxTypeSystemCritical
+	return c.Emit(ctx, input)
 }
 
 // EmitWarning creates a system-warning event.

@@ -10,6 +10,7 @@ const (
 	ErrCodeInvalidAPIKey               = "invalid_api_key"
 	ErrCodeEventTypeRequired           = "event_type_required"
 	ErrCodeEventPropertiesEmpty        = "event_properties_empty"
+	ErrCodeEventMessageTooLong         = "event_message_too_long"
 	ErrCodeEventExternalObjectConflict = "event_external_object_conflict"
 	ErrCodeEventExternalIDNotFound     = "event_external_id_not_found"
 	ErrCodeEventExternalIDRequired     = "event_external_id_required"

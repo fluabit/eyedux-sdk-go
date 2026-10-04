@@ -141,9 +141,22 @@ event, err := client.CreateEvent(ctx, eyeduxsdk.CreateEventInput{
 ```
 
 Available values are `EventEyeduxTypeSystemError`,
-`EventEyeduxTypeSystemWarning`, `EventEyeduxTypeSystemLog`,
+`EventEyeduxTypeSystemCritical`, `EventEyeduxTypeSystemWarning`, `EventEyeduxTypeSystemLog`,
 `EventEyeduxTypeSystemDebug`, `EventEyeduxTypeSystemInfo` and
-`EventEyeduxTypeAudit`.
+`EventEyeduxTypeAudit` and `EventEyeduxTypeMetric`.
+
+Use `Message` to associate an optional human-readable summary with an event.
+The API accepts at most `eyeduxsdk.MaxEventMessageLength` (500) characters:
+
+```go
+event, err := client.EmitCritical(ctx, eyeduxsdk.EmitInput{
+    Type:    "database.unavailable",
+    Message: "The primary database is unavailable.",
+    Properties: map[string]any{
+        "database": "orders",
+    },
+})
+```
 
 ### Modelo de auditoria
 
@@ -206,8 +219,8 @@ O SDK adiciona `error`, `operation`, `source_file`, `source_line` e
 retornada em `emitErr` e não substitui o erro original da operação. Para um
 fluxo próprio, use `eyeduxsdk.ErrorProperties` diretamente.
 
-Para as demais categorias predefinidas, use `EmitWarning`, `EmitLog`,
-`EmitDebug`, `EmitInfo` ou `EmitAudit` com o mesmo `EmitInput`.
+Para as demais categorias predefinidas, use `EmitCritical`, `EmitWarning`,
+`EmitLog`, `EmitDebug`, `EmitInfo` ou `EmitAudit` com o mesmo `EmitInput`.
 Wrappers que adicionam uma camada própria devem usar `EmitInput.SourceSkip`
 para ajustar a origem registrada.
 

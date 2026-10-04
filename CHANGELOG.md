@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-10-04
+
+### Added
+
+- Added `EventEyeduxTypeSystemCritical` and `Client.EmitCritical`.
+- Added the optional `Message` field to event inputs and responses, with
+  `MaxEventMessageLength` documenting the API's 500-character limit.
+- Added `ErrCodeEventMessageTooLong` for the API's message-length validation
+  response.
+
 ## [0.9.0] - 2026-09-22
 
 ### Added

@@ -110,8 +110,9 @@ func TrackSignup(ctx context.Context, client *eyeduxsdk.Client, userID string) e
 
 `Properties` é o payload principal do evento e deve conter pelo menos um
 valor. Os valores precisam ser serializáveis como JSON. `Type` é obrigatório;
-`TypeGroup`, `EyeduxType`, `Metadata` e os objetos de referência são
-opcionais.
+`TypeGroup`, `Message`, `EyeduxType`, `Metadata` e os objetos de referência
+são opcionais. `Message` é um resumo legível do evento e aceita até 500
+caracteres (`eyeduxsdk.MaxEventMessageLength`).
 
 ## Emitindo erros com diagnóstico
 
@@ -171,7 +172,8 @@ o mesmo `EmitInput`:
 })
 ```
 
-Também estão disponíveis `EmitLog`, `EmitDebug`, `EmitInfo` e `EmitAudit`.
+Também estão disponíveis `EmitCritical`, `EmitLog`, `EmitDebug`, `EmitInfo` e
+`EmitAudit`.
 Esses métodos retornam o `*Event` criado e o erro da API, assim como
 `CreateEvent`.
 

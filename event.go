@@ -6,6 +6,7 @@ import "time"
 type EventEyeduxType string
 
 const (
+	EventEyeduxTypeSystemCritical EventEyeduxType = "system-critical"
 	EventEyeduxTypeSystemError   EventEyeduxType = "system-error"
 	EventEyeduxTypeSystemWarning EventEyeduxType = "system-warning"
 	EventEyeduxTypeSystemLog     EventEyeduxType = "system-log"
@@ -14,6 +15,9 @@ const (
 	EventEyeduxTypeAudit         EventEyeduxType = "audit"
 	EventEyeduxTypeMetric        EventEyeduxType = "metric"
 )
+
+// MaxEventMessageLength is the maximum number of characters accepted for an event message.
+const MaxEventMessageLength = 500
 
 // EventObject is a reference to an external or correlated entity.
 type EventObject struct {
@@ -29,6 +33,7 @@ type Event struct {
 	EyeduxType        *EventEyeduxType `json:"eyedux_type"`
 	Type              string           `json:"type"`
 	TypeGroup         string           `json:"type_group"`
+	Message           *string          `json:"message"`
 	Properties        map[string]any   `json:"properties"`
 	Status            string           `json:"status"`
 	Timestamp         time.Time        `json:"timestamp"`
@@ -43,6 +48,7 @@ type CreateEventInput struct {
 	ProjectID         string
 	Type              string
 	TypeGroup         string
+	Message           string
 	EyeduxType        EventEyeduxType
 	Properties        map[string]any
 	ExternalObject    *EventObject

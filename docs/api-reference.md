@@ -143,6 +143,7 @@ Content-Type: application/json
 | `project_id` | `string` | Sim | ObjectID hexadecimal (24 chars) |
 | `type` | `string` | Sim | Categoria do evento; não pode ser vazio |
 | `type_group` | `string` | Não | Grupo da categoria do evento |
+| `message` | `string` | Não | Resumo legível do evento; máximo de 500 caracteres |
 | `eyedux_type` | `string` | Não | Tipo predefinido do Eyedux |
 | `properties` | `object` | Sim | Payload livre; não pode ser vazio (`{}` é rejeitado) |
 | `external_object` | `object` | Não | Referência externa (`id`, `property` e `source`) |
@@ -156,6 +157,7 @@ Content-Type: application/json
   "project_id": "64f1a2b3c4d5e6f7a8b9c0d1",
   "type": "user.signup",
   "type_group": "identity",
+  "message": "New user signup",
   "eyedux_type": "system-log",
   "properties": {
     "plan": "pro",
@@ -190,6 +192,7 @@ HTTP 201 Created
     "eyedux_type": "system-log",
     "type": "user.signup",
     "type_group": "identity",
+    "message": "New user signup",
     "properties": { "plan": "pro", "source": "landing_page" },
     "status": "active",
     "timestamp": "2026-08-13T10:00:00Z",
@@ -208,6 +211,7 @@ HTTP 201 Created
 | `eyedux_type` | `string` ou `null` | Sempre |
 | `type` | `string` | Sempre |
 | `type_group` | `string` | Sempre |
+| `message` | `string` ou `null` | Sempre |
 | `properties` | `object` | Sempre |
 | `status` | `string` | Sempre (`active` na criação) |
 | `timestamp` | `string` (RFC3339) | Sempre |
@@ -357,6 +361,7 @@ Representa um evento retornado pela API. Campos opcionais são sempre presentes 
 | `environment` | `string` | Ambiente da API key |
 | `eyedux_type` | `*EventEyeduxType` | `null` quando não definido |
 | `type_group` | `string` | Vazio quando não definido |
+| `message` | `*string` | `nil` quando não definido |
 | `external_object` | `*EventObject` | `null` quando não definido |
 | `correlation_object` | `*EventObject` | `null` quando não definido |
 | `metadata` | `map[string]any` | `null` quando não definido |
@@ -371,6 +376,7 @@ Entrada para criação de evento.
 | `Type` | `string` | Sim |
 | `Properties` | `map[string]any` | Sim |
 | `TypeGroup` | `string` | Não |
+| `Message` | `string` | Não; máximo de 500 caracteres |
 | `EyeduxType` | `EventEyeduxType` | Não |
 | `ExternalObject` | `*EventObject` | Não |
 | `CorrelationObject` | `*EventObject` | Não |
@@ -392,6 +398,7 @@ autocomplete:
 
 | Constante | Valor JSON |
 |-----------|------------|
+| `EventEyeduxTypeSystemCritical` | `system-critical` |
 | `EventEyeduxTypeSystemError` | `system-error` |
 | `EventEyeduxTypeSystemWarning` | `system-warning` |
 | `EventEyeduxTypeSystemLog` | `system-log` |
@@ -564,6 +571,7 @@ type EmitInput struct {
   ProjectID         string
   Type              string
   TypeGroup         string
+  Message           string
   EyeduxType        EventEyeduxType
   Properties        map[string]any
   AuditProperties   *AuditProperties
@@ -584,6 +592,7 @@ atalhos para as categorias predefinidas:
 
 ```go
 func (c *Client) Emit(ctx context.Context, input EmitInput) (*Event, error)
+func (c *Client) EmitCritical(ctx context.Context, input EmitInput) (*Event, error)
 func (c *Client) EmitWarning(ctx context.Context, input EmitInput) (*Event, error)
 func (c *Client) EmitLog(ctx context.Context, input EmitInput) (*Event, error)
 func (c *Client) EmitDebug(ctx context.Context, input EmitInput) (*Event, error)
@@ -593,8 +602,8 @@ func (c *Client) EmitMetric(ctx context.Context, input EmitInput) (*Event, error
 ```
 
 `Emit` usa `input.EyeduxType`. Os atalhos substituem esse campo e aplicam,
-respectivamente, `system-warning`,
-`system-log`, `system-debug`, `system-info`, `audit` e `metric`.
+respectivamente, `system-critical`, `system-warning`, `system-log`,
+`system-debug`, `system-info`, `audit` e `metric`.
 
 ## Códigos de erro
 
@@ -605,6 +614,7 @@ Tabela consolidada de todos os códigos de erro conhecidos da Public API.
 | `invalid_api_key` | `422` | API key inválida ou revogada |
 | `event_type_required` | `422` | Campo `type` enviado mas vazio |
 | `event_properties_empty` | `422` | Campo `properties` enviado mas vazio |
+| `event_message_too_long` | `422` | Campo `message` excede 500 caracteres |
 | `event_external_object_conflict` | `409` | `external_object` duplicado |
 | `event_external_id_not_found` | `404` | Nenhum evento com o `external_id` informado |
 | `event_external_id_required` | `422` | `external_id` vazio no path param |
