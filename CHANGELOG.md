@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.1] - 2026-10-11
+
+### Changed
+
+- Updated README examples and configuration reference.
+- Clarified event creation flow and response-envelope naming without changing
+  API behavior.
+
 ## [0.11.0] - 2026-10-04
 
 ### Added
@@ -179,7 +187,10 @@ decidida pelo consumidor. Consumidores que usam apenas a API estável de
 - Structured API error handling (`APIError`, `IsConflict`, `IsNotFound`, `IsAuthError`).
 - `ErrEmptyAPIKey`, `ErrEmptyExternalID` sentinel errors.
 
-[Unreleased]: https://github.com/fluabit/eyedux-sdk-go/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/fluabit/eyedux-sdk-go/compare/v0.11.1...HEAD
+[0.11.1]: https://github.com/fluabit/eyedux-sdk-go/compare/v0.11.0...v0.11.1
+[0.11.0]: https://github.com/fluabit/eyedux-sdk-go/compare/v0.10.0...v0.11.0
+[0.10.0]: https://github.com/fluabit/eyedux-sdk-go/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/fluabit/eyedux-sdk-go/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/fluabit/eyedux-sdk-go/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/fluabit/eyedux-sdk-go/compare/v0.6.0...v0.7.0

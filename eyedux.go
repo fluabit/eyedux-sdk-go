@@ -150,26 +150,46 @@ type createEventBody struct {
 
 // CreateEvent ingests a new event into the authenticated organization.
 func (c *Client) CreateEvent(ctx context.Context, input CreateEventInput) (*Event, error) {
+	// Se o chamador não informou um ProjectID (ou só passou espaços), usa o
+	// ProjectID padrão configurado no client.
 	if strings.TrimSpace(input.ProjectID) == "" {
 		input.ProjectID = c.projectID
 	}
+	// Se mesmo após o fallback o ProjectID continuar vazio, não há como
+	// prosseguir: retorna erro específico de ProjectID ausente.
 	if strings.TrimSpace(input.ProjectID) == "" {
 		return nil, ErrEmptyProjectID
 	}
+	// Normaliza o ProjectID removendo espaços em branco nas extremidades
+	// antes de usá-lo na requisição.
 	input.ProjectID = strings.TrimSpace(input.ProjectID)
+	// Parte dos metadados padrão configurados no client (pode ser nil).
 	defaultMetadata := c.defaultMetadata
+	// Quando a coleta automática de metadados está habilitada, o tipo do
+	// evento é um dos que exigem metadados de runtime, e existe um
+	// provider configurado, mescla os metadados retornados pelo provider
+	// com os metadados padrão (o provider tem prioridade).
 	if c.automaticMetadata && isRuntimeMetadataEvent(input.EyeduxType) && c.metadataProvider != nil {
 		defaultMetadata = mergeMaps(c.metadataProvider(), defaultMetadata)
 	}
+	// Mescla os metadados padrão (já combinados com os de runtime, se houver)
+	// com os metadados explicitamente informados pelo chamador, dando
+	// prioridade aos valores de input.Metadata.
 	input.Metadata = mergeMaps(defaultMetadata, input.Metadata)
+	// Monta o corpo da requisição HTTP a partir do input já normalizado.
 	body := createEventBody(input)
 
-	var env successEnvelope[*Event]
-	if err := c.do(ctx, http.MethodPost, "/public/logs", body, &env); err != nil {
+	// Envelope genérico usado para decodificar a resposta de sucesso da API,
+	// cujo campo Data é um ponteiro para o Event criado.
+	var envelope successEnvelope[*Event]
+	// Executa a chamada POST para o endpoint de criação de eventos.
+	// Em caso de erro (rede, status não-2xx, etc.), retorna imediatamente.
+	if err := c.do(ctx, http.MethodPost, "/public/logs", body, &envelope); err != nil {
 		return nil, err
 	}
 
-	return env.Data, nil
+	// Retorna o evento criado, extraído do envelope de resposta.
+	return envelope.Data, nil
 }
 
 func cloneMap(values map[string]any) map[string]any {
@@ -212,15 +232,15 @@ func (c *Client) ListEvents(ctx context.Context, input ListEventsInput) ([]Event
 		path += "?" + params.Encode()
 	}
 
-	var env successEnvelope[[]Event]
-	if err := c.do(ctx, http.MethodGet, path, nil, &env); err != nil {
+	var envelope successEnvelope[[]Event]
+	if err := c.do(ctx, http.MethodGet, path, nil, &envelope); err != nil {
 		return nil, err
 	}
 
-	if env.Data == nil {
+	if envelope.Data == nil {
 		return []Event{}, nil
 	}
-	return env.Data, nil
+	return envelope.Data, nil
 }
 
 // FindEventByExternalID retrieves a single event by its external ID.
@@ -232,10 +252,10 @@ func (c *Client) FindEventByExternalID(ctx context.Context, externalID string) (
 
 	path := "/public/logs/external/" + url.PathEscape(externalID)
 
-	var env successEnvelope[*Event]
-	if err := c.do(ctx, http.MethodGet, path, nil, &env); err != nil {
+	var envelope successEnvelope[*Event]
+	if err := c.do(ctx, http.MethodGet, path, nil, &envelope); err != nil {
 		return nil, err
 	}
 
-	return env.Data, nil
+	return envelope.Data, nil
 }

@@ -7,13 +7,13 @@ type EventEyeduxType string
 
 const (
 	EventEyeduxTypeSystemCritical EventEyeduxType = "system-critical"
-	EventEyeduxTypeSystemError   EventEyeduxType = "system-error"
-	EventEyeduxTypeSystemWarning EventEyeduxType = "system-warning"
-	EventEyeduxTypeSystemLog     EventEyeduxType = "system-log"
-	EventEyeduxTypeSystemDebug   EventEyeduxType = "system-debug"
-	EventEyeduxTypeSystemInfo    EventEyeduxType = "system-info"
-	EventEyeduxTypeAudit         EventEyeduxType = "audit"
-	EventEyeduxTypeMetric        EventEyeduxType = "metric"
+	EventEyeduxTypeSystemError    EventEyeduxType = "system-error"
+	EventEyeduxTypeSystemWarning  EventEyeduxType = "system-warning"
+	EventEyeduxTypeSystemLog      EventEyeduxType = "system-log"
+	EventEyeduxTypeSystemDebug    EventEyeduxType = "system-debug"
+	EventEyeduxTypeSystemInfo     EventEyeduxType = "system-info"
+	EventEyeduxTypeAudit          EventEyeduxType = "audit"
+	EventEyeduxTypeMetric         EventEyeduxType = "metric"
 )
 
 // MaxEventMessageLength is the maximum number of characters accepted for an event message.

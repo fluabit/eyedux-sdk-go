@@ -34,6 +34,7 @@ func main() {
 
     event, err := client.CreateEvent(context.Background(), eyeduxsdk.CreateEventInput{
         Type:       "user.signup",
+        Message:    "User signed up",
         EyeduxType: eyeduxsdk.EventEyeduxTypeSystemLog,
         Properties: map[string]any{"plan": "pro", "source": "landing_page"},
     })
@@ -63,7 +64,6 @@ Retorna `ErrEmptyAPIKey` se `apiKey` for vazio. A base URL (`https://api.eyedux.
 | `eyeduxsdk.WithHTTPClient(c)` | Substitui o `*http.Client` inteiro | `&http.Client{Timeout: 30s}` |
 | `eyeduxsdk.WithProjectID(id)` | Define o projeto padrão dos eventos | vazio |
 | `eyeduxsdk.WithDefaultMetadata(m)` | Adiciona metadados padrão aos eventos | vazio |
-| `eyeduxsdk.WithAutomaticMetadata(false)` | Desativa a coleta automática de metadados de runtime | habilitada |
 
 ```go
 // Timeout customizado
@@ -73,19 +73,6 @@ client, err := eyeduxsdk.New("sua-api-key", eyeduxsdk.WithTimeout(10*time.Second
 client, err := eyeduxsdk.New("sua-api-key", eyeduxsdk.WithHTTPClient(meuHTTPClient))
 ```
 
-Para eventos `system-*`, `metric` e `audit`, o SDK inclui por padrão em
-`Metadata` informações do runtime: sistema operacional, arquitetura, versão
-do Go, número de CPUs, goroutines, memória do processo, hostname e endereços
-IP locais não loopback. Metadados fornecidos pelo integrador prevalecem sobre
-os valores automáticos. Para não enviar esses dados:
-
-```go
-client, err := eyeduxsdk.New(
-    "sua-api-key",
-    eyeduxsdk.WithAutomaticMetadata(false),
-)
-```
-
 ### `eyeduxsdk.NewWithConfig`
 
 Use `NewWithConfig` when the application already has an explicit configuration.
@@ -93,10 +80,9 @@ Use `NewWithConfig` when the application already has an explicit configuration.
 
 ```go
 client, err := eyeduxsdk.NewWithConfig(eyeduxsdk.Config{
-    APIKey:                   "sua-api-key",
-    ProjectID:                "64f1a2b3c4d5e6f7a8b9c0d1",
-    Timeout:                  2 * time.Second,
-    DisableAutomaticMetadata: true,
+    APIKey:    "sua-api-key",
+    ProjectID: "64f1a2b3c4d5e6f7a8b9c0d1",
+    Timeout:   2 * time.Second,
 })
 ```
 
@@ -126,6 +112,7 @@ corrID := "session_abc123"
 event, err := client.CreateEvent(ctx, eyeduxsdk.CreateEventInput{
     ProjectID: "64f1a2b3c4d5e6f7a8b9c0d1",
     Type:      "user.signup",
+    Message:   "User signed up",
     Properties: map[string]any{"plan": "pro"},
     ExternalObject: &eyeduxsdk.EventObject{
         ID:       extID,
@@ -155,23 +142,11 @@ event, err := client.CreateEvent(ctx, eyeduxsdk.CreateEventInput{
 })
 ```
 
-Available values are `EventEyeduxTypeSystemError`,
-`EventEyeduxTypeSystemCritical`, `EventEyeduxTypeSystemWarning`, `EventEyeduxTypeSystemLog`,
+Available values are `EventEyeduxTypeSystemCritical`,
+`EventEyeduxTypeSystemError`,
+`EventEyeduxTypeSystemWarning`, `EventEyeduxTypeSystemLog`,
 `EventEyeduxTypeSystemDebug`, `EventEyeduxTypeSystemInfo` and
-`EventEyeduxTypeAudit` and `EventEyeduxTypeMetric`.
-
-Use `Message` to associate an optional human-readable summary with an event.
-The API accepts at most `eyeduxsdk.MaxEventMessageLength` (500) characters:
-
-```go
-event, err := client.EmitCritical(ctx, eyeduxsdk.EmitInput{
-    Type:    "database.unavailable",
-    Message: "The primary database is unavailable.",
-    Properties: map[string]any{
-        "database": "orders",
-    },
-})
-```
+`EventEyeduxTypeAudit`.
 
 ### Modelo de auditoria
 
@@ -334,6 +309,7 @@ O SDK não implementa retry automático — a política de retry fica a cargo do
 | `EyeduxType` | `*EventEyeduxType` | `nil` quando não definido |
 | `Type` | `string` | Sempre |
 | `TypeGroup` | `string` | Vazio quando não definido |
+| `Message` | `*string` | `nil` quando não informado; até 500 caracteres |
 | `Properties` | `map[string]any` | Sempre |
 | `Status` | `string` | Sempre (`"active"` ou `"deleted"`) |
 | `Timestamp` | `time.Time` | Sempre |
