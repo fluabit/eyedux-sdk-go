@@ -135,19 +135,6 @@ func NewFromEnv(opts ...Option) (*Client, error) {
 	return New(strings.TrimSpace(os.Getenv("EYEDUX_API_KEY")), opts...)
 }
 
-// createEventBody is the JSON payload for POST /public/logs.
-type createEventBody struct {
-	ProjectID         string          `json:"project_id"`
-	Type              string          `json:"type"`
-	TypeGroup         string          `json:"type_group,omitempty"`
-	Message           string          `json:"message,omitempty"`
-	EyeduxType        EventEyeduxType `json:"eyedux_type,omitempty"`
-	Properties        map[string]any  `json:"properties"`
-	ExternalObject    *EventObject    `json:"external_object,omitempty"`
-	CorrelationObject *EventObject    `json:"correlation_object,omitempty"`
-	Metadata          map[string]any  `json:"metadata,omitempty"`
-}
-
 // CreateEvent ingests a new event into the authenticated organization.
 func (c *Client) CreateEvent(ctx context.Context, input CreateEventInput) (*Event, error) {
 	// Se o chamador não informou um ProjectID (ou só passou espaços), usa o
@@ -176,8 +163,10 @@ func (c *Client) CreateEvent(ctx context.Context, input CreateEventInput) (*Even
 	// com os metadados explicitamente informados pelo chamador, dando
 	// prioridade aos valores de input.Metadata.
 	input.Metadata = mergeMaps(defaultMetadata, input.Metadata)
-	// Monta o corpo da requisição HTTP a partir do input já normalizado.
 	body := createEventBody(input)
+	if body.Properties == nil {
+		body.Properties = map[string]any{}
+	}
 
 	// Envelope genérico usado para decodificar a resposta de sucesso da API,
 	// cujo campo Data é um ponteiro para o Event criado.
@@ -190,6 +179,19 @@ func (c *Client) CreateEvent(ctx context.Context, input CreateEventInput) (*Even
 
 	// Retorna o evento criado, extraído do envelope de resposta.
 	return envelope.Data, nil
+}
+
+// createEventBody is the JSON payload for POST /public/logs.
+type createEventBody struct {
+	ProjectID         string          `json:"project_id"`
+	Type              string          `json:"type"`
+	TypeGroup         string          `json:"type_group,omitempty"`
+	Message           string          `json:"message,omitempty"`
+	EyeduxType        EventEyeduxType `json:"eyedux_type,omitempty"`
+	Properties        map[string]any  `json:"properties"`
+	ExternalObject    *EventObject    `json:"external_object,omitempty"`
+	CorrelationObject *EventObject    `json:"correlation_object,omitempty"`
+	Metadata          map[string]any  `json:"metadata,omitempty"`
 }
 
 func cloneMap(values map[string]any) map[string]any {

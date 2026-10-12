@@ -209,6 +209,11 @@ O SDK adiciona `error`, `operation`, `source_file`, `source_line` e
 retornada em `emitErr` e não substitui o erro original da operação. Para um
 fluxo próprio, use `eyeduxsdk.ErrorProperties` diretamente.
 
+O SDK envia `Properties` como um objeto aninhado, sem validar ou transformar
+`code`, `workflow` ou quaisquer outras chaves e valores. Para exibição especial
+no Eyedux, o client pode enviar esses grupos na estrutura convencionada. Veja a
+[referência da API](docs/api-reference.md#propriedades-especiais-de-origem).
+
 Para as demais categorias predefinidas, use `EmitCritical`, `EmitWarning`,
 `EmitLog`, `EmitDebug`, `EmitInfo` ou `EmitAudit` com o mesmo `EmitInput`.
 Wrappers que adicionam uma camada própria devem usar `EmitInput.SourceSkip`
@@ -310,7 +315,7 @@ O SDK não implementa retry automático — a política de retry fica a cargo do
 | `Type` | `string` | Sempre |
 | `TypeGroup` | `string` | Vazio quando não definido |
 | `Message` | `*string` | `nil` quando não informado; até 500 caracteres |
-| `Properties` | `map[string]any` | Sempre |
+| `Properties` | `map[string]any` | Todos os campos personalizados, inclusive `code` e `workflow` |
 | `Status` | `string` | Sempre (`"active"` ou `"deleted"`) |
 | `Timestamp` | `time.Time` | Sempre |
 | `CreatedAt` | `time.Time` | Sempre |

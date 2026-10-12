@@ -93,15 +93,18 @@ func TestClientEmitAudit_usesStructuredProperties(t *testing.T) {
 		if body.EyeduxType != EventEyeduxTypeAudit {
 			t.Errorf("eyedux_type = %q, want %q", body.EyeduxType, EventEyeduxTypeAudit)
 		}
-		actor := body.Properties["actor"].(map[string]any)
+		actor, ok := body.Properties["actor"].(map[string]any)
+		if !ok {
+			t.Fatalf("properties.actor = %T, want map[string]any", body.Properties["actor"])
+		}
 		if actor["type"] != "service" || actor["id"] != "account-service" || actor["source"] != "account-service" {
 			t.Errorf("actor = %v, want service/account-service/account-service", actor)
 		}
 		if body.Properties["result"] != "denied" {
-			t.Errorf("result = %v, want denied", body.Properties["result"])
+			t.Errorf("properties.result = %v, want denied", body.Properties["result"])
 		}
 		if body.Properties["reason"] != "missing permission" {
-			t.Errorf("reason = %v, want missing permission", body.Properties["reason"])
+			t.Errorf("properties.reason = %v, want missing permission", body.Properties["reason"])
 		}
 		writeJSON(w, http.StatusCreated, map[string]any{"data": map[string]any{"id": "event-123"}})
 	})
@@ -134,14 +137,17 @@ func TestClientEmitMetric_usesStructuredProperties(t *testing.T) {
 			t.Errorf("eyedux_type = %q, want %q", body.EyeduxType, EventEyeduxTypeMetric)
 		}
 		if body.Properties["value"] != 120.5 {
-			t.Errorf("value = %v, want 120.5", body.Properties["value"])
+			t.Errorf("properties.value = %v, want 120.5", body.Properties["value"])
 		}
 		if body.Properties["unit"] != "milliseconds" {
-			t.Errorf("unit = %v, want milliseconds", body.Properties["unit"])
+			t.Errorf("properties.unit = %v, want milliseconds", body.Properties["unit"])
 		}
-		dimensions := body.Properties["dimensions"].(map[string]any)
+		dimensions, ok := body.Properties["dimensions"].(map[string]any)
+		if !ok {
+			t.Fatalf("properties.dimensions = %T, want map[string]any", body.Properties["dimensions"])
+		}
 		if dimensions["route"] != "/checkout" {
-			t.Errorf("dimensions.route = %v, want /checkout", dimensions["route"])
+			t.Errorf("properties.dimensions.route = %v, want /checkout", dimensions["route"])
 		}
 		writeJSON(w, http.StatusCreated, map[string]any{"data": map[string]any{"id": "event-123"}})
 	})

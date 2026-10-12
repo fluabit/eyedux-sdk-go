@@ -55,27 +55,28 @@ func TestErrorProperties_copiesAndEnriches(t *testing.T) {
 
 func TestClientEmitError_createsEnrichedEvent(t *testing.T) {
 	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
-		var body struct {
-			EyeduxType EventEyeduxType `json:"eyedux_type"`
-			Properties map[string]any  `json:"properties"`
-		}
+		var body map[string]any
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			t.Fatalf("decode request body: %v", err)
 		}
-		if body.Properties["error"] != "request failed" {
-			t.Errorf("error = %v, want request failed", body.Properties["error"])
+		properties, ok := body["properties"].(map[string]any)
+		if !ok {
+			t.Fatalf("properties = %T, want map[string]any", body["properties"])
 		}
-		if body.EyeduxType != EventEyeduxTypeSystemError {
-			t.Errorf("eyedux_type = %q, want %q", body.EyeduxType, EventEyeduxTypeSystemError)
+		if properties["error"] != "request failed" {
+			t.Errorf("properties.error = %v, want request failed", properties["error"])
 		}
-		if body.Properties["operation"] != "create order" {
-			t.Errorf("operation = %v, want create order", body.Properties["operation"])
+		if body["eyedux_type"] != string(EventEyeduxTypeSystemError) {
+			t.Errorf("eyedux_type = %q, want %q", body["eyedux_type"], EventEyeduxTypeSystemError)
 		}
-		if body.Properties["source_file"] != "diagnostics_test.go" {
-			t.Errorf("source_file = %v, want diagnostics_test.go", body.Properties["source_file"])
+		if properties["operation"] != "create order" {
+			t.Errorf("properties.operation = %v, want create order", properties["operation"])
 		}
-		if !strings.HasSuffix(body.Properties["source_function"].(string), "TestClientEmitError_createsEnrichedEvent") {
-			t.Errorf("source_function = %v, want test function", body.Properties["source_function"])
+		if properties["source_file"] != "diagnostics_test.go" {
+			t.Errorf("properties.source_file = %v, want diagnostics_test.go", properties["source_file"])
+		}
+		if !strings.HasSuffix(properties["source_function"].(string), "TestClientEmitError_createsEnrichedEvent") {
+			t.Errorf("properties.source_function = %v, want test function", properties["source_function"])
 		}
 		writeJSON(w, http.StatusCreated, map[string]any{
 			"data": map[string]any{"id": "event-123"},
@@ -103,14 +104,16 @@ func TestClientEmitError_createsEnrichedEvent(t *testing.T) {
 
 func TestClientEmitErrorWithSourceSkip_skipsWrapper(t *testing.T) {
 	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
-		var body struct {
-			Properties map[string]any `json:"properties"`
-		}
+		var body map[string]any
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			t.Fatalf("decode request body: %v", err)
 		}
-		if !strings.HasSuffix(body.Properties["source_function"].(string), "TestClientEmitErrorWithSourceSkip_skipsWrapper") {
-			t.Errorf("source_function = %v, want test function", body.Properties["source_function"])
+		properties, ok := body["properties"].(map[string]any)
+		if !ok {
+			t.Fatalf("properties = %T, want map[string]any", body["properties"])
+		}
+		if !strings.HasSuffix(properties["source_function"].(string), "TestClientEmitErrorWithSourceSkip_skipsWrapper") {
+			t.Errorf("properties.source_function = %v, want test function", properties["source_function"])
 		}
 		writeJSON(w, http.StatusCreated, map[string]any{"data": map[string]any{"id": "event-123"}})
 	})

@@ -159,6 +159,30 @@ func CreateOrder(ctx context.Context, client *eyeduxsdk.Client, orderID string) 
 continua sendo retornada pelo client da aplicação, enquanto a falha de
 telemetria pode ser observada separadamente.
 
+O helper usa as chaves `error`, `operation`, `source_file`, `source_line` e
+`source_function` em `Properties`. O SDK envia o mapa dentro do objeto
+`properties`, sem validar os nomes das chaves nem o formato de `code` e
+`workflow`. Para que a interface do Eyedux exiba esses grupos de forma
+especial, envie-os já na estrutura desejada:
+
+```go
+Properties: map[string]any{
+	"code": map[string]any{
+		"source_file": "orders.go",
+		"source_line": 42,
+	},
+	"workflow": map[string]any{
+		"source_workflow":    "orders",
+		"source_node":        "save-order",
+		"source_execution_id": "execution-123",
+	},
+}
+```
+
+Se os campos forem enviados individualmente, por exemplo `source_file` fora de
+`code`, eles permanecem chaves independentes dentro de `properties`. Consulte
+[Propriedades especiais de origem na referência da API](api-reference.md#propriedades-especiais-de-origem).
+
 Quando a aplicação já possui um fluxo próprio para criar eventos, use o
 helper puro `ErrorProperties`:
 

@@ -28,28 +28,30 @@ type EventObject struct {
 
 // Event represents an event returned by the Eyedux API.
 type Event struct {
-	ID                string           `json:"id"`
-	Environment       string           `json:"environment"`
-	EyeduxType        *EventEyeduxType `json:"eyedux_type"`
-	Type              string           `json:"type"`
-	TypeGroup         string           `json:"type_group"`
-	Message           *string          `json:"message"`
-	Properties        map[string]any   `json:"properties"`
-	Status            string           `json:"status"`
-	Timestamp         time.Time        `json:"timestamp"`
-	CreatedAt         time.Time        `json:"created_at"`
-	ExternalObject    *EventObject     `json:"external_object"`
-	CorrelationObject *EventObject     `json:"correlation_object"`
-	Metadata          map[string]any   `json:"metadata"`
+	ID          string           `json:"id"`
+	Environment string           `json:"environment"`
+	EyeduxType  *EventEyeduxType `json:"eyedux_type"`
+	Type        string           `json:"type"`
+	TypeGroup   string           `json:"type_group"`
+	Message     *string          `json:"message"`
+	// Properties contains the custom properties object, including code and workflow.
+	Properties        map[string]any `json:"properties"`
+	Status            string         `json:"status"`
+	Timestamp         time.Time      `json:"timestamp"`
+	CreatedAt         time.Time      `json:"created_at"`
+	ExternalObject    *EventObject   `json:"external_object"`
+	CorrelationObject *EventObject   `json:"correlation_object"`
+	Metadata          map[string]any `json:"metadata"`
 }
 
 // CreateEventInput holds the parameters for creating a new event.
 type CreateEventInput struct {
-	ProjectID         string
-	Type              string
-	TypeGroup         string
-	Message           string
-	EyeduxType        EventEyeduxType
+	ProjectID  string
+	Type       string
+	TypeGroup  string
+	Message    string
+	EyeduxType EventEyeduxType
+	// Properties are serialized as a nested object without schema validation.
 	Properties        map[string]any
 	ExternalObject    *EventObject
 	CorrelationObject *EventObject

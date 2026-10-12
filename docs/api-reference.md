@@ -145,7 +145,7 @@ Content-Type: application/json
 | `type_group` | `string` | Não | Grupo da categoria do evento |
 | `message` | `string` | Não | Resumo legível do evento; máximo de 500 caracteres |
 | `eyedux_type` | `string` | Não | Tipo predefinido do Eyedux |
-| `properties` | `object` | Sim | Payload livre; não pode ser vazio (`{}` é rejeitado) |
+| `properties` | `object` | Sim | Campos personalizados livres, sem validação de nomes ou valores |
 | `external_object` | `object` | Não | Referência externa (`id`, `property` e `source`) |
 | `correlation_object` | `object` | Não | Referência correlacionada (`id`, `property` e `source`) |
 | `metadata` | `object` | Não | Dados de contexto livres (IP, user agent, etc.) |
@@ -160,6 +160,16 @@ Content-Type: application/json
   "message": "New user signup",
   "eyedux_type": "system-log",
   "properties": {
+    "code": {
+      "source_file": "signup.go",
+      "source_line": 42,
+      "source_function": "example.com/app.TrackSignup"
+    },
+    "workflow": {
+      "source_workflow": "user-onboarding",
+      "source_node": "create-user",
+      "source_execution_id": "execution-123"
+    },
     "plan": "pro",
     "source": "landing_page"
   },
@@ -193,7 +203,20 @@ HTTP 201 Created
     "type": "user.signup",
     "type_group": "identity",
     "message": "New user signup",
-    "properties": { "plan": "pro", "source": "landing_page" },
+    "properties": {
+      "code": {
+        "source_file": "signup.go",
+        "source_line": 42,
+        "source_function": "example.com/app.TrackSignup"
+      },
+      "workflow": {
+        "source_workflow": "user-onboarding",
+        "source_node": "create-user",
+        "source_execution_id": "execution-123"
+      },
+      "plan": "pro",
+      "source": "landing_page"
+    },
     "status": "active",
     "timestamp": "2026-08-13T10:00:00Z",
     "created_at": "2026-08-13T10:00:01Z",
@@ -212,7 +235,7 @@ HTTP 201 Created
 | `type` | `string` | Sempre |
 | `type_group` | `string` | Sempre |
 | `message` | `string` ou `null` | Sempre |
-| `properties` | `object` | Sempre |
+| `properties` | `object` | Campos personalizados recebidos, inclusive `code` e `workflow` |
 | `status` | `string` | Sempre (`active` na criação) |
 | `timestamp` | `string` (RFC3339) | Sempre |
 | `created_at` | `string` (RFC3339) | Sempre |
@@ -224,9 +247,9 @@ HTTP 201 Created
 
 | Status | Cenário | Código |
 |--------|---------|--------|
-| `400` | JSON inválido, `project_id` ausente ou formato inválido, `type` ou `properties` ausentes | — |
+| `400` | JSON inválido, `project_id` ausente ou formato inválido, `type` ou campos personalizados ausentes | — |
 | `409` | `external_object` já utilizado por outro evento | `event_external_object_conflict` |
-| `422` | API key inválida/revogada; `type` enviado mas vazio; `properties` enviado mas vazio | `invalid_api_key` / `event_type_required` / `event_properties_empty` |
+| `422` | API key inválida/revogada; `type` enviado mas vazio; nenhum campo personalizado enviado | `invalid_api_key` / `event_type_required` / `event_properties_empty` |
 | `429` | Rate limit excedido | `RATE_LIMIT_EXCEEDED` |
 | `500` | Falha interna do servidor | `INTERNAL_SERVER_ERROR` |
 
@@ -264,7 +287,7 @@ HTTP 200 OK
     {
       "id": "64f1a2b3c4d5e6f7a8b9c0d1",
       "type": "user.signup",
-      "properties": { "plan": "pro" },
+      "plan": "pro",
       "status": "active",
       "timestamp": "2026-08-13T10:00:00Z",
       "created_at": "2026-08-13T10:00:01Z",
@@ -319,7 +342,7 @@ HTTP 200 OK
   "data": {
     "id": "64f1a2b3c4d5e6f7a8b9c0d1",
     "type": "user.signup",
-    "properties": { "plan": "pro" },
+    "plan": "pro",
     "status": "active",
     "timestamp": "2026-08-13T10:00:00Z",
     "created_at": "2026-08-13T10:00:01Z",
@@ -354,7 +377,7 @@ Representa um evento retornado pela API. Campos opcionais são sempre presentes 
 |-------|-----------------|------------|
 | `id` | `string` | ObjectID hexadecimal |
 | `type` | `string` | |
-| `properties` | `map[string]any` | |
+| `properties` | `map[string]any` (`Properties`) | Objeto de campos personalizados, inclusive `code` e `workflow` |
 | `status` | `string` | `"active"` ou `"deleted"` |
 | `timestamp` | `time.Time` | RFC3339 |
 | `created_at` | `time.Time` | RFC3339 |
@@ -366,6 +389,9 @@ Representa um evento retornado pela API. Campos opcionais são sempre presentes 
 | `correlation_object` | `*EventObject` | `null` quando não definido |
 | `metadata` | `map[string]any` | `null` quando não definido |
 
+`Event.Properties` contém os campos recebidos no objeto `properties`, inclusive
+`code` e `workflow`, independentemente do tipo ou formato.
+
 ### CreateEventInput
 
 Entrada para criação de evento.
@@ -374,13 +400,21 @@ Entrada para criação de evento.
 |-------|-----------------|-------------|
 | `ProjectID` | `string` | Sim |
 | `Type` | `string` | Sim |
-| `Properties` | `map[string]any` | Sim |
+| `Properties` | `map[string]any` | Sim; serializado no objeto `properties` |
 | `TypeGroup` | `string` | Não |
 | `Message` | `string` | Não; máximo de 500 caracteres |
 | `EyeduxType` | `EventEyeduxType` | Não |
 | `ExternalObject` | `*EventObject` | Não |
 | `CorrelationObject` | `*EventObject` | Não |
 | `Metadata` | `map[string]any` | Não |
+
+Todas as chaves e valores de `Properties` são enviados no objeto `properties`,
+sem validação ou transformação do formato de `code`, `workflow` ou das chaves
+`source_*`. Para que a interface do Eyedux reconheça os grupos especiais,
+envie `code` e `workflow` na estrutura convencionada; valores em outra forma
+continuam aceitos e são exibidos como enviados. Mesmo uma chave igual a um
+campo do envelope, como `type` ou `project_id`, permanece dentro de
+`properties` e não altera o campo do evento.
 
 Para eventos `system-*`, `metric` e `audit`, o SDK inclui automaticamente em
 `Metadata` os seguintes campos:
@@ -562,6 +596,85 @@ O método copia o mapa de propriedades e não altera o input do consumidor. A
 falha de envio é retornada separadamente; o erro original continua sob
 responsabilidade do client da aplicação.
 
+### Propriedades de diagnóstico
+
+O SDK usa estas chaves convencionais em `Properties` ao enriquecer eventos de
+erro. Os nomes são serializados em `snake_case`:
+
+| Chave | Tipo | Quando é incluída |
+|-------|------|-------------------|
+| `error` | string | Quando um erro é passado ao helper |
+| `operation` | string | Quando a operação não está vazia |
+| `source_file` | string | Quando o SDK identifica o caller; contém apenas o nome base do arquivo |
+| `source_line` | integer | Quando o SDK identifica o caller |
+| `source_function` | string | Quando o SDK identifica o caller |
+
+`EmitError`, `ErrorProperties` e `ErrorPropertiesWithSourceSkip` preenchem
+esses campos conforme os valores disponíveis. Se uma dessas chaves já existir
+no mapa de entrada e o helper produzir um novo valor para ela, o valor
+produzido pelo helper prevalece. O mapa original não é alterado.
+
+Em eventos criados diretamente com `CreateEvent`, o client pode informar essas
+chaves em `Properties`; o SDK envia o mapa dentro do objeto `properties`. Os
+helpers de diagnóstico preenchem automaticamente `source_file`, `source_line`
+e `source_function` quando possível; esses campos também ficam nesse objeto.
+
+### Propriedades especiais de origem
+
+O SDK envia `CreateEventInput.Properties` no objeto `properties`, sem
+interpretar ou modificar seus valores. O Eyedux pode exibir `code` e `workflow`
+de forma especial quando seguem as estruturas convencionadas:
+
+```json
+{
+  "properties": {
+    "code": {
+      "source_file": "orders.go",
+      "source_line": 42,
+      "source_function": "example.com/app.CreateOrder"
+    },
+    "workflow": {
+      "source_workflow": "orders",
+      "source_node": "save-order",
+      "source_execution_id": "execution-123"
+    },
+    "order_id": "order-456"
+  }
+}
+```
+
+Essas estruturas são convenções, não validações. `code` e `workflow` podem
+conter qualquer valor JSON. Se o client enviar `source_file`, `source_line` ou
+outras chaves sem colocá-las nos objetos `code`/`workflow`, elas permanecem
+como chaves independentes em `properties`.
+
+Exemplo de envio pela API Go:
+
+```go
+input := eyeduxsdk.CreateEventInput{
+  Type: "order.error",
+  Properties: map[string]any{
+    "code": map[string]any{
+      "source_file":     "orders.go",
+      "source_line":     42,
+      "source_function": "example.com/app.CreateOrder",
+    },
+    "workflow": map[string]any{
+      "source_workflow":     "orders",
+      "source_node":         "save-order",
+      "source_execution_id": "execution-123",
+    },
+    "order_id":            "order-456",
+  },
+}
+```
+
+`EmitError`, `ErrorProperties` e `ErrorPropertiesWithSourceSkip` continuam
+produzindo os campos de diagnóstico no mapa. Como o SDK não transforma as
+chaves individuais em grupos, clientes que desejam a exibição especial podem
+montar `code` manualmente. Todos os valores personalizados são acessíveis em
+`Event.Properties` como chegaram no objeto `properties` da resposta.
+
 ### Helpers de diagnóstico
 
 ```go
@@ -634,7 +747,7 @@ Tabela consolidada de todos os códigos de erro conhecidos da Public API.
 |--------|-------------|-----------|
 | `invalid_api_key` | `422` | API key inválida ou revogada |
 | `event_type_required` | `422` | Campo `type` enviado mas vazio |
-| `event_properties_empty` | `422` | Campo `properties` enviado mas vazio |
+| `event_properties_empty` | `422` | Nenhum campo personalizado enviado no objeto `properties` |
 | `event_message_too_long` | `422` | Campo `message` excede 500 caracteres |
 | `event_external_object_conflict` | `409` | `external_object` duplicado |
 | `event_external_id_not_found` | `404` | Nenhum evento com o `external_id` informado |

@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Documented the recommended `code` and `workflow` property shapes for
+  diagnostics and workflow events.
+
+### Changed
+
+- `CreateEventInput.Properties` is serialized as a nested `properties` object.
+- Property names and values, including `code` and `workflow`, are passed
+  through without schema validation or restructuring. Properties that share
+  names with event envelope fields remain nested and do not override them.
+
 ## [0.11.1] - 2026-10-11
 
 ### Changed

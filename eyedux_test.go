@@ -248,8 +248,133 @@ func TestCreateEvent_success(t *testing.T) {
 	if event.Message == nil || *event.Message != "User signed up" {
 		t.Errorf("Message = %v, want %q", event.Message, "User signed up")
 	}
+	if event.Properties["plan"] != "pro" {
+		t.Errorf("Properties[plan] = %v, want pro", event.Properties["plan"])
+	}
 	if event.Status != "active" {
 		t.Errorf("Status = %s, want active", event.Status)
+	}
+}
+
+func TestCreateEvent_sendsPropertiesNestedWithoutChangingTheirValues(t *testing.T) {
+	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatalf("decode request body: %v", err)
+		}
+		properties, ok := body["properties"].(map[string]any)
+		if !ok {
+			t.Fatalf("properties = %T, want map[string]any", body["properties"])
+		}
+		if _, ok := body["order_id"]; ok {
+			t.Error("order_id must remain inside properties")
+		}
+		if value, ok := properties["optional"]; !ok || value != nil {
+			t.Errorf("properties.optional = %v, present = %t; want null field", value, ok)
+		}
+		if properties["code"] != "free-form-code" {
+			t.Errorf("properties.code = %v, want free-form-code", properties["code"])
+		}
+		if properties["workflow"] != float64(123) {
+			t.Errorf("properties.workflow = %v, want 123", properties["workflow"])
+		}
+		if properties["source_file"] != "orders.go" || properties["source_line"] != "42" {
+			t.Errorf("properties source fields = %v/%v, want unchanged values", properties["source_file"], properties["source_line"])
+		}
+
+		writeJSON(w, http.StatusCreated, map[string]any{
+			"data": map[string]any{
+				"id": "event-123",
+				"properties": map[string]any{
+					"code":        "free-form-code",
+					"workflow":    123,
+					"source_file": "orders.go",
+					"order_id":    "order-456",
+				},
+			},
+		})
+	})
+
+	event, err := c.CreateEvent(context.Background(), CreateEventInput{
+		ProjectID: "project",
+		Type:      "order.error",
+		Properties: map[string]any{
+			"order_id":            "order-456",
+			"optional":            nil,
+			"source_file":         "orders.go",
+			"source_line":         "42",
+			"source_function":     []string{"arbitrary", "value"},
+			"source_workflow":     false,
+			"source_node":         map[string]any{"arbitrary": true},
+			"source_execution_id": 123,
+			"code":                "free-form-code",
+			"workflow":            123,
+		},
+	})
+	if err != nil {
+		t.Fatalf("CreateEvent: %v", err)
+	}
+	if event.Properties["order_id"] != "order-456" {
+		t.Errorf("Properties[order_id] = %v, want order-456", event.Properties["order_id"])
+	}
+	if event.Properties["code"] != "free-form-code" {
+		t.Errorf("Properties[code] = %v, want free-form-code", event.Properties["code"])
+	}
+	if event.Properties["workflow"] != float64(123) {
+		t.Errorf("Properties[workflow] = %v, want 123", event.Properties["workflow"])
+	}
+}
+
+func TestCreateEvent_allowsPropertyMatchingEnvelopeField(t *testing.T) {
+	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Type       string         `json:"type"`
+			Properties map[string]any `json:"properties"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatalf("decode request body: %v", err)
+		}
+		if body.Type != "original" {
+			t.Errorf("type = %v, want original event type", body.Type)
+		}
+		if body.Properties["type"] != "custom" {
+			t.Errorf("properties.type = %v, want custom property value", body.Properties["type"])
+		}
+		writeJSON(w, http.StatusCreated, map[string]any{"data": map[string]any{"id": "event-123"}})
+	})
+
+	_, err := c.CreateEvent(context.Background(), CreateEventInput{
+		ProjectID:  "project",
+		Type:       "original",
+		Properties: map[string]any{"type": "custom"},
+	})
+	if err != nil {
+		t.Fatalf("CreateEvent: %v", err)
+	}
+}
+
+func TestCreateEvent_nilPropertiesSendsEmptyObject(t *testing.T) {
+	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatalf("decode request body: %v", err)
+		}
+		properties, ok := body["properties"].(map[string]any)
+		if !ok {
+			t.Fatalf("properties = %T, want empty map[string]any", body["properties"])
+		}
+		if len(properties) != 0 {
+			t.Errorf("properties = %v, want empty object", properties)
+		}
+		writeJSON(w, http.StatusCreated, map[string]any{"data": map[string]any{"id": "event-123"}})
+	})
+
+	_, err := c.CreateEvent(context.Background(), CreateEventInput{
+		ProjectID: "project",
+		Type:      "order.created",
+	})
+	if err != nil {
+		t.Fatalf("CreateEvent: %v", err)
 	}
 }
 
